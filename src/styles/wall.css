@@ -1,0 +1,198 @@
+/* ============================================================
+   wall.css — 담벼락 보드 스타일
+   ============================================================ */
+
+/* ── 캔버스 래퍼 ── */
+.wall-canvas {
+    position: relative;
+    width: 100%;
+    min-height: calc(100vh - 200px);
+    background-color: var(--c-bg);
+    background-image:
+      radial-gradient(circle, #c8c8e0 1px, transparent 1px);
+    background-size: 28px 28px;
+    border-radius: var(--r-lg);
+    border: 1.5px solid var(--c-border);
+    overflow: hidden;
+    cursor: default;
+  }
+  
+  /* ── 포스트잇 카드 ── */
+  .wall-card {
+    position: absolute;
+    border-radius: 4px 14px 14px 4px;
+    box-shadow: 3px 4px 12px rgba(0,0,0,.15), 0 1px 2px rgba(0,0,0,.1);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+    transition: box-shadow .15s, transform .12s;
+    user-select: none;
+  }
+  .wall-card:hover {
+    box-shadow: 6px 8px 24px rgba(0,0,0,.18), 0 2px 4px rgba(0,0,0,.12);
+    z-index: 10;
+  }
+  .wall-card.dragging {
+    box-shadow: 12px 16px 40px rgba(0,0,0,.25);
+    transform: rotate(1.5deg) scale(1.03);
+    z-index: 100;
+    cursor: grabbing;
+  }
+  
+  /* 포스트잇 상단 탭 */
+  .wall-card-tab {
+    height: 28px;
+    border-radius: 4px 14px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    filter: brightness(.88);
+    cursor: grab;
+    flex-shrink: 0;
+  }
+  .wall-card-tab:active { cursor: grabbing; }
+  
+  .wall-card-author {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(0,0,0,.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+  }
+  .wall-card-tab-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity .15s;
+  }
+  .wall-card:hover .wall-card-tab-actions { opacity: 1; }
+  
+  .wall-tab-btn {
+    width: 20px; height: 20px;
+    border: none;
+    background: rgba(0,0,0,.18);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: rgba(0,0,0,.6);
+    transition: background .12s;
+  }
+  .wall-tab-btn:hover { background: rgba(0,0,0,.32); }
+  
+  /* 본문 */
+  .wall-card-body {
+    flex: 1;
+    padding: 10px 12px 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(0,0,0,.75);
+    font-family: var(--font-body);
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 60px;
+    cursor: pointer;
+  }
+  
+  /* 편집 textarea */
+  .wall-card-editor {
+    flex: 1;
+    resize: none;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(0,0,0,.75);
+    font-family: var(--font-body);
+    padding: 10px 12px 12px;
+    min-height: 80px;
+  }
+  
+  /* 날짜 / 첨부파일 푸터 */
+  .wall-card-footer {
+    padding: 4px 12px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .wall-card-date {
+    font-size: 10px;
+    color: rgba(0,0,0,.4);
+  }
+  .wall-card-attach-badge {
+    font-size: 10px;
+    color: rgba(0,0,0,.5);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  
+  /* ── 추가 버튼 (FAB) ── */
+  .wall-fab {
+    position: fixed;
+    bottom: 36px;
+    right: 36px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--c-primary);
+    color: #fff;
+    font-size: 28px;
+    line-height: 1;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 6px 24px rgba(108,99,255,.38);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .18s;
+    z-index: 200;
+  }
+  .wall-fab:hover {
+    background: var(--c-primary-dark);
+    transform: scale(1.1);
+    box-shadow: 0 10px 32px rgba(108,99,255,.48);
+  }
+  
+  /* ── 색상 팔레트 ── */
+  .wall-color-palette {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .wall-color-dot {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2.5px solid transparent;
+    transition: all .15s;
+  }
+  .wall-color-dot.selected,
+  .wall-color-dot:hover {
+    border-color: var(--c-text);
+    transform: scale(1.15);
+  }
+  
+  /* ── 빈 상태 ── */
+  .wall-empty {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--c-muted);
+    pointer-events: none;
+  }
+  .wall-empty-icon { font-size: 56px; margin-bottom: 12px; opacity: .5; }
+  .wall-empty-text { font-size: 16px; font-weight: 700; color: var(--c-text-secondary); }
+  .wall-empty-sub  { font-size: 13px; margin-top: 4px; }
+  
