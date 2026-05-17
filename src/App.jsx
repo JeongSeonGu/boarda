@@ -23,7 +23,25 @@ import './styles/globals.css';
 import './styles/components.css';
 import './index.css';
 
+import { useEffect } from 'react'
+
 function AppShell() {
+  const fetchBoards = useBoardStore((s) => s.fetchBoards)
+  const loading     = useBoardStore((s) => s.loading)
+
+  // 앱 시작 시 DB에서 데이터 불러오기
+  useEffect(() => {
+    fetchBoards()
+  }, [])
+
+  if (loading) {
+    return (
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', fontFamily:'var(--font-head)', fontSize:18, color:'var(--c-muted)' }}>
+        ⏳ 불러오는 중...
+      </div>
+    )
+  }
+
   const navigate = useNavigate();
   const sidebarCollapsed = useBoardStore((s) => s.sidebarCollapsed);
 

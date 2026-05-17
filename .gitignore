@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# GitHub에 올려서는 안되는 파일
+.env
+.env.local
