@@ -1,13 +1,9 @@
-/**
- * pages/BoardListPage.jsx
- * 보드 목록 페이지 — 컬럼 보드 또는 링크 보드 목록
- */
-import React from 'react';
-import useBoardStore from '../store/useBoardStore';
-import BoardCard from '../components/board/BoardCard';
-import EmptyState from '../components/common/EmptyState';
-import Button from '../components/common/Button';
-import '../styles/board.css';
+import React, { useCallback } from 'react'
+import useBoardStore from '../store/useBoardStore'
+import BoardCard from '../components/board/BoardCard'
+import EmptyState from '../components/common/EmptyState'
+import Button from '../components/common/Button'
+import '../styles/board.css'
 
 const META = {
   columns: {
@@ -20,18 +16,22 @@ const META = {
     title: '링크 보드',
     desc: '사이트와 링크를 태그와 함께 체계적으로 관리합니다',
   },
-};
+}
 
 export default function BoardListPage({ type, onNewBoard, onShareBoard }) {
-  const boards = useBoardStore((s) =>
-    s.boards.filter((b) => b.type === type)
-  );
-  const m = META[type];
+  // ✅ 핵심 수정: 전체 boards를 가져온 후 컴포넌트에서 필터링
+  //    (셀렉터 내부에서 filter()하면 매번 새 배열 → 무한루프)
+  const allBoards = useBoardStore((s) => s.boards)
+  const boards = allBoards.filter((b) => b.type === type)
+  const m = META[type]
 
   return (
     <div>
-      {/* 페이지 헤더 */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+      <div style={{
+        display: 'flex', alignItems: 'flex-start',
+        justifyContent: 'space-between', marginBottom: 24,
+        flexWrap: 'wrap', gap: 12,
+      }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 900, marginBottom: 4 }}>
             {m.emoji} {m.title}
@@ -43,7 +43,6 @@ export default function BoardListPage({ type, onNewBoard, onShareBoard }) {
         </Button>
       </div>
 
-      {/* 보드 목록 */}
       {boards.length === 0 ? (
         <EmptyState
           icon={m.emoji}
@@ -60,5 +59,5 @@ export default function BoardListPage({ type, onNewBoard, onShareBoard }) {
         </div>
       )}
     </div>
-  );
+  )
 }
