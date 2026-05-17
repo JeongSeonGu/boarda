@@ -1,0 +1,100 @@
+/* ============================================================
+   globals.css — CSS 변수, 리셋, 기본 타이포그래피
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+/* ── 테마 변수 ── */
+:root {
+  /* 브랜드 색상 */
+  --c-primary:        #6C63FF;
+  --c-primary-light:  #EEF0FF;
+  --c-primary-dark:   #5550D9;
+  --c-secondary:      #FF6584;
+  --c-accent:         #43C59E;
+  --c-yellow:         #FFD166;
+  --c-blue:           #118AB2;
+  --c-danger:         #FF4D6D;
+  --c-danger-light:   #FFEEF2;
+
+  /* 배경 / 표면 */
+  --c-bg:             #F7F8FC;
+  --c-surface:        #FFFFFF;
+  --c-surface-hover:  #F0F2FB;
+
+  /* 텍스트 */
+  --c-text:           #1A1B2E;
+  --c-text-secondary: #4A4D6A;
+  --c-muted:          #7B7F9E;
+
+  /* 테두리 */
+  --c-border:         #E8EAF2;
+  --c-border-strong:  #CDD0E8;
+
+  /* 반지름 */
+  --r-sm:   8px;
+  --r-md:   14px;
+  --r-lg:   20px;
+  --r-xl:   28px;
+  --r-full: 9999px;
+
+  /* 그림자 */
+  --shadow-xs: 0 1px 4px rgba(108,99,255,.06);
+  --shadow-sm: 0 2px 8px rgba(108,99,255,.10);
+  --shadow-md: 0 6px 24px rgba(108,99,255,.14);
+  --shadow-lg: 0 16px 48px rgba(108,99,255,.18);
+
+  /* 폰트 */
+  --font-head: 'Nunito', sans-serif;
+  --font-body: 'Noto Sans KR', sans-serif;
+
+  /* 레이아웃 */
+  --sidebar-width:           240px;
+  --sidebar-collapsed-width:  64px;
+  --topbar-height:            58px;
+
+  /* 전환 */
+  --transition: .18s ease;
+}
+
+/* ── 리셋 ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--c-bg);
+  color: var(--c-text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: var(--font-body); }
+input, textarea, select { font-family: var(--font-body); }
+
+/* ── 스크롤바 ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--c-border-strong);
+  border-radius: var(--r-full);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--c-muted); }
+
+/* ── 유틸 ── */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -1,0 +1,10 @@
+/* index.css */
+#root { height: 100vh; overflow: hidden; }
+
+@media (max-width: 768px) {
+  .board-grid { grid-template-columns: 1fr; }
+  .board-type-grid { grid-template-columns: 1fr 1fr; }
+  .links-grid { grid-template-columns: 1fr; }
+  .hero-banner { padding: 28px 24px; }
+  .hero-title { font-size: 22px; }
+}

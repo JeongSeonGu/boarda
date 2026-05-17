@@ -1,0 +1,49 @@
+/* ============================================================
+   topbar.css
+   ============================================================ */
+.topbar {
+  height: var(--topbar-height);
+  background: var(--c-surface);
+  border-bottom: 1.5px solid var(--c-border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--c-bg);
+  border: 1.5px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: 7px 14px;
+  flex: 1;
+  max-width: 400px;
+  transition: border-color var(--transition);
+}
+.topbar-search:focus-within {
+  border-color: var(--c-primary);
+  background: var(--c-surface);
+}
+.topbar-search input {
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 14px;
+  color: var(--c-text);
+  width: 100%;
+}
+.topbar-search input::placeholder { color: var(--c-muted); }
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
