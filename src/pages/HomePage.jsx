@@ -27,10 +27,10 @@ export default function HomePage({ onNewBoard, onShareBoard }) {
       {/* ── 히어로 ── */}
       <section className="hero-banner" aria-label="소개">
         <div className="hero-content">
-          <h1 className="hero-title">✨ 나만의 지식 보드</h1>
+          <h1 className="hero-title">✨ 나의 지식허브</h1>
           <p className="hero-desc">
             아이디어를 정리하고, 유용한 링크를 모아보세요.<br />
-            당신의 두 번째 두뇌, <strong>Boarda</strong>입니다.
+            당신의 두 번째 두뇌, <strong>학습보드</strong>입니다.
           </p>
           <div className="hero-actions">
             <button className="hero-btn-white" onClick={onNewBoard}>

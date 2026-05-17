@@ -33,7 +33,7 @@ export default function Sidebar({ onNewBoard }) {
       {/* 로고 */}
       <div className="sidebar-logo">
         <div className="logo-icon" aria-hidden="true">📌</div>
-        {!collapsed && <span className="logo-text">Boarda</span>}
+        {!collapsed && <span className="logo-text">학습보드</span>}
       </div>
 
       {/* 네비게이션 */}
