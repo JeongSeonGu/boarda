@@ -191,3 +191,11 @@
   color: var(--c-primary);
   background: var(--c-primary-light);
 }
+
+/* ── 드래그 중 컬럼 카드 스타일 ── */
+.column-card[data-dragging="true"] {
+  border-color: var(--c-primary);
+}
+.post-card:hover .post-drag-hint {
+  opacity: 1;
+}

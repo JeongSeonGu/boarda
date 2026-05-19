@@ -1,8 +1,6 @@
 /**
  * store/useBoardStore.js
- * 수정:
- *  - updateBoard: share_mode, is_public, bg_opacity, bg_image_key 포함
- *  - deleteBoard: Storage 파일 일괄 삭제 (배경이미지 + 첨부파일)
+ * 수정: reorderWallPosts, bringWallPostToFront 추가
  */
 import { create } from 'zustand'
 import { supabase } from '../utils/supabase'
@@ -11,7 +9,6 @@ import { genId, parseTags, categoryEmoji, nextColumnColor } from '../utils/helpe
 function getStoredAuthor() {
   try { return localStorage.getItem('boarda_author') || '익명' } catch { return '익명' }
 }
-
 function randomPos(index = 0) {
   const cols = 4
   return {
@@ -19,7 +16,6 @@ function randomPos(index = 0) {
     pos_y: 40 + Math.floor(index / cols) * 200 + Math.random() * 20,
   }
 }
-
 async function loadAllBoards() {
   const [
     { data: boards, error: bErr },
@@ -32,7 +28,7 @@ async function loadAllBoards() {
     supabase.from('columns').select('*').order('position'),
     supabase.from('posts').select('*').order('created_at'),
     supabase.from('links').select('*').order('created_at'),
-    supabase.from('wall_posts').select('*').order('created_at'),
+    supabase.from('wall_posts').select('*').order('z_order').order('created_at'),
   ])
   if (bErr) throw bErr
   return (boards ?? []).map((b) => ({
@@ -45,8 +41,6 @@ async function loadAllBoards() {
     wall_posts: b.type === 'wall'  ? (wallPosts ?? []).filter((w) => w.board_id === b.id) : undefined,
   }))
 }
-
-/* Storage 파일 URL → 경로 추출 */
 function urlToStoragePath(url = '') {
   try {
     const u = new URL(url)
@@ -54,42 +48,25 @@ function urlToStoragePath(url = '') {
     return parts[1] ?? null
   } catch { return null }
 }
-
-/* 보드에 속한 모든 첨부파일 경로 수집 */
 function collectStoragePaths(board) {
   const paths = []
   if (!board) return paths
-
-  /* 배경이미지 */
   if (board.bg_image_key) paths.push(board.bg_image_key)
-
-  /* 게시물 첨부파일 */
   ;(board.columns ?? []).forEach((col) =>
     (col.posts ?? []).forEach((p) =>
       (p.attachments ?? []).forEach((f) => {
-        if (f.type !== 'link') {
-          const path = urlToStoragePath(f.url)
-          if (path) paths.push(path)
-        }
+        if (f.type !== 'link') { const path = urlToStoragePath(f.url); if (path) paths.push(path) }
       })
     )
   )
-  /* 링크 첨부파일 */
   ;(board.links ?? []).forEach((l) =>
     (l.attachments ?? []).forEach((f) => {
-      if (f.type !== 'link') {
-        const path = urlToStoragePath(f.url)
-        if (path) paths.push(path)
-      }
+      if (f.type !== 'link') { const path = urlToStoragePath(f.url); if (path) paths.push(path) }
     })
   )
-  /* 담벼락 첨부파일 */
   ;(board.wall_posts ?? []).forEach((w) =>
     (w.attachments ?? []).forEach((f) => {
-      if (f.type !== 'link') {
-        const path = urlToStoragePath(f.url)
-        if (path) paths.push(path)
-      }
+      if (f.type !== 'link') { const path = urlToStoragePath(f.url); if (path) paths.push(path) }
     })
   )
   return paths
@@ -123,10 +100,8 @@ const useBoardStore = create((set, get) => ({
   createBoard: async ({ type, name, desc = '', color = '#6C63FF' }) => {
     const id = genId('b')
     const { error } = await supabase.from('boards').insert({
-      id, type, name, description: desc, color,
-      author: get().author,
-      is_public: false,
-      share_mode: 'private',
+      id, type, name, description: desc, color, author: get().author,
+      is_public: false, share_mode: 'private',
     })
     if (error) { get().showToast('보드 생성 실패: ' + error.message, 'error'); return null }
     try { set({ boards: await loadAllBoards() }) } catch {}
@@ -134,7 +109,6 @@ const useBoardStore = create((set, get) => ({
     return id
   },
 
-  /* ── 보드 설정 저장 ── */
   updateBoard: async (boardId, patch) => {
     const { error } = await supabase.from('boards').update(patch).eq('id', boardId)
     if (error) { get().showToast('설정 저장 실패: ' + error.message, 'error'); return }
@@ -146,35 +120,131 @@ const useBoardStore = create((set, get) => ({
     get().showToast('저장되었습니다 ✅', 'success')
   },
 
-  /* ── 보드 삭제 (Storage 파일 일괄 삭제) ── */
   deleteBoard: async (boardId) => {
     const board = get().boards.find((b) => b.id === boardId)
     const paths = collectStoragePaths(board)
-
-    /* Storage 파일 삭제 */
     if (paths.length > 0) {
-      const { error } = await supabase.storage.from('boarda-files').remove(paths)
-      if (error) console.warn('[deleteBoard] Storage 삭제 부분 실패:', error.message)
+      await supabase.storage.from('boarda-files').remove(paths).catch((e) =>
+        console.warn('[deleteBoard] Storage 삭제 실패:', e.message)
+      )
     }
-
-    /* DB 보드 삭제 (CASCADE로 하위 항목 자동 삭제) */
     await supabase.from('boards').delete().eq('id', boardId)
     set((s) => ({ boards: s.boards.filter((b) => b.id !== boardId) }))
     get().showToast('보드와 관련 파일이 삭제되었습니다', 'info')
   },
 
-  /* ── 공유 해제 ── */
   unshareBoard: async (boardId) => {
     await get().updateBoard(boardId, {
-      is_public:      false,
-      share_mode:     'private',
-      share_password: null,
-      share_edit:     false,
+      is_public: false, share_mode: 'private',
+      share_password: null, share_edit: false,
     })
     get().showToast('공유가 해제되었습니다', 'info')
   },
 
-  /* ── 컬럼 ── */
+  /* ══════════════════════════════════════
+     드래그앤드롭 순서 변경
+  ══════════════════════════════════════ */
+
+  /** 컬럼 순서 변경 */
+  reorderColumns: async (boardId, orderedColIds) => {
+    set((s) => ({
+      boards: s.boards.map((b) => {
+        if (b.id !== boardId) return b
+        const colMap = Object.fromEntries(b.columns.map((c) => [c.id, c]))
+        return { ...b, columns: orderedColIds.map((id) => colMap[id]).filter(Boolean) }
+      }),
+    }))
+    await Promise.all(
+      orderedColIds.map((id, idx) =>
+        supabase.from('columns').update({ position: idx }).eq('id', id)
+      )
+    )
+  },
+
+  /** 게시물 순서/컬럼 간 이동 */
+  reorderPosts: async (boardId, srcColId, dstColId, postId, dstIndex) => {
+    set((s) => ({
+      boards: s.boards.map((b) => {
+        if (b.id !== boardId) return b
+        const cols = b.columns.map((c) => ({ ...c, posts: [...c.posts] }))
+        const srcCol = cols.find((c) => c.id === srcColId)
+        const dstCol = cols.find((c) => c.id === dstColId)
+        if (!srcCol || !dstCol) return b
+        const postIdx = srcCol.posts.findIndex((p) => p.id === postId)
+        if (postIdx === -1) return b
+        const [post] = srcCol.posts.splice(postIdx, 1)
+        if (srcColId !== dstColId) post.column_id = dstColId
+        dstCol.posts.splice(dstIndex, 0, post)
+        return { ...b, columns: cols }
+      }),
+    }))
+    if (srcColId !== dstColId) {
+      await supabase.from('posts').update({ column_id: dstColId }).eq('id', postId)
+    }
+  },
+
+  /** 링크 순서 변경 */
+  reorderLinks: async (boardId, orderedLinkIds) => {
+    set((s) => ({
+      boards: s.boards.map((b) => {
+        if (b.id !== boardId) return b
+        const linkMap = Object.fromEntries(b.links.map((l) => [l.id, l]))
+        return { ...b, links: orderedLinkIds.map((id) => linkMap[id]).filter(Boolean) }
+      }),
+    }))
+    await Promise.all(
+      orderedLinkIds.map((id, idx) =>
+        supabase.from('links').update({ position: idx }).eq('id', id).then(() => {})
+      )
+    ).catch(() => {})
+  },
+
+  /**
+   * 담벼락 격자 모드 순서 변경
+   * z_order 를 인덱스 기반으로 일괄 업데이트
+   */
+  reorderWallPosts: async (boardId, orderedPostIds) => {
+    /* 로컬 즉시 반영 */
+    set((s) => ({
+      boards: s.boards.map((b) => {
+        if (b.id !== boardId) return b
+        const postMap = Object.fromEntries(b.wall_posts.map((w) => [w.id, w]))
+        return {
+          ...b,
+          wall_posts: orderedPostIds.map((id, idx) =>
+            postMap[id] ? { ...postMap[id], z_order: idx } : null
+          ).filter(Boolean),
+        }
+      }),
+    }))
+    /* DB 반영 */
+    await Promise.all(
+      orderedPostIds.map((id, idx) =>
+        supabase.from('wall_posts').update({ z_order: idx }).eq('id', id)
+      )
+    )
+  },
+
+  /**
+   * 자유 모드: 클릭한 카드를 최상위로 올리기
+   */
+  bringWallPostToFront: async (boardId, postId, newZOrder) => {
+    /* 로컬 즉시 반영 */
+    set((s) => ({
+      boards: s.boards.map((b) =>
+        b.id !== boardId ? b : {
+          ...b,
+          wall_posts: b.wall_posts.map((w) =>
+            w.id === postId ? { ...w, z_order: newZOrder } : w
+          ),
+        }
+      ),
+    }))
+    /* DB 반영 (debounce 없이 즉시 — 빈도 낮음) */
+    await supabase.from('wall_posts').update({ z_order: newZOrder }).eq('id', postId)
+  },
+
+  /* ── 컬럼 CRUD ── */
   addColumn: async (boardId) => {
     const board = get().boards.find((b) => b.id === boardId)
     const id = genId('c'), position = (board?.columns ?? []).length
@@ -197,7 +267,7 @@ const useBoardStore = create((set, get) => ({
     get().showToast('컬럼이 삭제되었습니다', 'info')
   },
 
-  /* ── 게시물 ── */
+  /* ── 게시물 CRUD ── */
   addPost: async (boardId, colId, { title, content = '', tags = [], attachments = [] }) => {
     const id = genId('p')
     const { error } = await supabase.from('posts').insert({
@@ -221,7 +291,7 @@ const useBoardStore = create((set, get) => ({
     get().showToast('게시물이 삭제되었습니다', 'info')
   },
 
-  /* ── 링크 ── */
+  /* ── 링크 CRUD ── */
   addLink: async (boardId, { title, url, desc = '', category = '기타', importance = '보통', tags = [], attachments = [] }) => {
     const id = genId('l')
     const { error } = await supabase.from('links').insert({
@@ -246,12 +316,17 @@ const useBoardStore = create((set, get) => ({
     get().showToast('링크가 삭제되었습니다', 'info')
   },
 
-  /* ── 담벼락 ── */
+  /* ── 담벼락 CRUD ── */
   addWallPost: async (boardId, { content, color, attachments = [] }) => {
     const board = get().boards.find((b) => b.id === boardId)
-    const id = genId('w'), { pos_x, pos_y } = randomPos((board?.wall_posts ?? []).length)
+    const wallPosts = board?.wall_posts ?? []
+    const id = genId('w')
+    const { pos_x, pos_y } = randomPos(wallPosts.length)
+    const maxZ = Math.max(0, ...wallPosts.map((w) => w.z_order ?? 0))
     const { error } = await supabase.from('wall_posts').insert({
-      id, board_id: boardId, content, color, pos_x, pos_y, width: 200,
+      id, board_id: boardId, content, color,
+      pos_x, pos_y, width: 200,
+      z_order: maxZ + 1,
       attachments, author: get().author,
     })
     if (error) { get().showToast('메모 추가 실패', 'error'); return null }
@@ -265,7 +340,8 @@ const useBoardStore = create((set, get) => ({
   moveWallPost: async (boardId, postId, pos_x, pos_y) => {
     await supabase.from('wall_posts').update({ pos_x, pos_y }).eq('id', postId)
     set((s) => ({ boards: s.boards.map((b) => b.id !== boardId ? b : {
-      ...b, wall_posts: b.wall_posts.map((w) => w.id !== postId ? w : { ...w, pos_x, pos_y }) }) }))
+      ...b, wall_posts: b.wall_posts.map((w) =>
+        w.id !== postId ? w : { ...w, pos_x, pos_y }) }) }))
   },
   deleteWallPost: async (boardId, postId) => {
     await supabase.from('wall_posts').delete().eq('id', postId)

@@ -191,3 +191,8 @@
   gap: 6px;
   flex-shrink: 0;
 }
+
+/* ── 링크 카드 드래그 핸들 hover ── */
+.link-drag-handle { transition: opacity .15s; }
+.link-card:hover + .link-drag-handle,
+div:hover > .link-drag-handle { opacity: 1 !important; }
