@@ -1,80 +1,107 @@
 /**
- * api/login.js
- * Vercel Serverless Function — 로그인 엔드포인트
- *
- * 역할:
- *  1. React 앱에서 { username, password } 수신
- *  2. PHP API(future-class.kr)에 검증 요청 → MySQL school_users + school_teachers JOIN
- *  3. 검증 성공 시 JWT 발급 → 클라이언트에 반환
- *
- * 보안:
- *  - PHP_API_SECRET, JWT_SECRET 은 Vercel 환경변수에만 존재 (git에 없음)
- *  - DB 접근 정보는 PHP 서버에만 존재 (이 파일에는 없음)
- *  - bcrypt 검증은 PHP 서버에서 수행
+ * api/login.js — Vercel Serverless Function
+ * 수정: jsonwebtoken(CJS) → jose(ESM) 교체, 환경변수 누락 처리 강화
  */
 
-import jwt from 'jsonwebtoken'
-
-const PHP_AUTH_URL = process.env.PHP_AUTH_URL   // 예: https://future-class.kr/boarda/auth.php
-const PHP_API_SECRET = process.env.PHP_API_SECRET  // PHP ↔ Vercel 공유 시크릿
-const JWT_SECRET = process.env.JWT_SECRET           // JWT 서명 키
+import { SignJWT } from 'jose'
 
 export default async function handler(req, res) {
-  /* CORS 헤더 */
-  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*')
+  /* ── CORS ── */
+  res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-
   if (req.method === 'OPTIONS') return res.status(200).end()
-  if (req.method !== 'POST')   return res.status(405).json({ ok: false, msg: '허용되지 않는 메서드' })
+  if (req.method !== 'POST') {
+    return res.status(405).json({ ok: false, msg: '허용되지 않는 메서드' })
+  }
 
+  /* ── 환경변수 확인 ── */
+  const PHP_AUTH_URL   = process.env.PHP_AUTH_URL
+  const PHP_API_SECRET = process.env.PHP_API_SECRET
+  const JWT_SECRET     = process.env.JWT_SECRET
+
+  if (!PHP_AUTH_URL || !PHP_API_SECRET || !JWT_SECRET) {
+    console.error('[login] 환경변수 누락:', {
+      PHP_AUTH_URL:   !!PHP_AUTH_URL,
+      PHP_API_SECRET: !!PHP_API_SECRET,
+      JWT_SECRET:     !!JWT_SECRET,
+    })
+    return res.status(500).json({
+      ok: false,
+      msg: '서버 설정 오류 — Vercel 환경변수를 확인하세요 (PHP_AUTH_URL, PHP_API_SECRET, JWT_SECRET)',
+    })
+  }
+
+  /* ── 요청 파싱 ── */
   const { username, password } = req.body ?? {}
-
   if (!username || !password) {
     return res.status(400).json({ ok: false, msg: '아이디와 비밀번호를 입력하세요' })
   }
 
+  /* ── PHP 인증 서버 호출 ── */
+  let phpResult
   try {
-    /* PHP API 서버에 인증 요청 */
     const phpRes = await fetch(PHP_AUTH_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Secret': PHP_API_SECRET,   // PHP 서버가 이 키로 요청 출처 검증
+        'X-API-Secret': PHP_API_SECRET,
       },
       body: JSON.stringify({ username, password }),
     })
 
-    if (!phpRes.ok) {
-      return res.status(502).json({ ok: false, msg: '인증 서버 오류' })
+    const rawText = await phpRes.text()
+
+    /* PHP 서버가 HTML 오류 페이지를 반환하는 경우 처리 */
+    try {
+      phpResult = JSON.parse(rawText)
+    } catch {
+      console.error('[login] PHP 서버 응답이 JSON이 아님:', rawText.slice(0, 200))
+      return res.status(502).json({
+        ok: false,
+        msg: 'PHP 인증 서버 응답 오류 — auth.php 파일과 URL을 확인하세요',
+      })
     }
 
-    const result = await phpRes.json()
-
-    if (!result.ok) {
-      return res.status(401).json({ ok: false, msg: result.msg || '아이디 또는 비밀번호가 올바르지 않습니다' })
+    if (!phpRes.ok || !phpResult.ok) {
+      return res.status(401).json({
+        ok: false,
+        msg: phpResult?.msg || '아이디 또는 비밀번호가 올바르지 않습니다',
+      })
     }
-
-    /* JWT 발급 (24시간) */
-    const payload = {
-      id:       result.data.id,
-      username: result.data.username,
-      name:     result.data.name,
-      role:     result.data.role,           // 'admin' | 'teacher'
-      is_classboard: result.data.is_classboard,
-      nickname: result.data.nickname || result.data.name,
-    }
-
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' })
-
-    return res.status(200).json({
-      ok: true,
-      token,
-      user: payload,
-    })
 
   } catch (err) {
-    console.error('[login] 오류:', err)
-    return res.status(500).json({ ok: false, msg: '서버 내부 오류' })
+    console.error('[login] PHP 서버 연결 오류:', err.message)
+    return res.status(502).json({
+      ok: false,
+      msg: 'PHP 인증 서버에 연결할 수 없습니다 — URL을 확인하세요: ' + PHP_AUTH_URL,
+    })
+  }
+
+  /* ── JWT 발급 (jose 라이브러리, ESM 완전 호환) ── */
+  try {
+    const secretKey = new TextEncoder().encode(JWT_SECRET)
+    const payload   = {
+      id:            phpResult.data.id,
+      username:      phpResult.data.username,
+      name:          phpResult.data.name,
+      nickname:      phpResult.data.nickname || phpResult.data.name,
+      role:          phpResult.data.role,
+      is_classboard: phpResult.data.is_classboard,
+      school_name:   phpResult.data.school_name,
+      class_name:    phpResult.data.class_name,
+    }
+
+    const token = await new SignJWT(payload)
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('24h')
+      .sign(secretKey)
+
+    return res.status(200).json({ ok: true, token, user: payload })
+
+  } catch (err) {
+    console.error('[login] JWT 발급 오류:', err.message)
+    return res.status(500).json({ ok: false, msg: 'JWT 발급 실패' })
   }
 }
