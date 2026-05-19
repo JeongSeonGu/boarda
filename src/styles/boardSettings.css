@@ -1,0 +1,183 @@
+/* ============================================================
+   boardSettings.css — 보드 설정, 공유 모달, 반응 UI
+   ============================================================ */
+
+/* ── 설정 섹션 구분 ── */
+.settings-section {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--c-border);
+  }
+  .settings-section:last-child { border-bottom: none; }
+  .settings-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--c-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 12px;
+  }
+  
+  /* ── 배경 선택 ── */
+  .bg-palette {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .bg-swatch {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    border: 2.5px solid transparent;
+    transition: all .15s;
+    flex-shrink: 0;
+  }
+  .bg-swatch:hover,
+  .bg-swatch.selected { border-color: var(--c-text); transform: scale(1.1); }
+  
+  .bg-image-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .bg-image-thumb {
+    aspect-ratio: 16/9;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    border: 2.5px solid transparent;
+    transition: all .15s;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    overflow: hidden;
+  }
+  .bg-image-thumb:hover,
+  .bg-image-thumb.selected { border-color: var(--c-primary); transform: scale(1.04); }
+  
+  /* ── 반응 타입 선택 ── */
+  .reaction-type-row {
+    display: flex;
+    gap: 8px;
+  }
+  .reaction-type-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--r-md);
+    cursor: pointer;
+    background: var(--c-surface);
+    transition: all .15s;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--c-muted);
+  }
+  .reaction-type-btn:hover { border-color: var(--c-primary); color: var(--c-primary); }
+  .reaction-type-btn.active {
+    border-color: var(--c-primary);
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+  }
+  .reaction-type-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+  
+  /* ── 공유 QR ── */
+  .share-qr-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 16px;
+    background: var(--c-bg);
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--r-md);
+  }
+  .share-qr-box canvas,
+  .share-qr-box img { border-radius: var(--r-sm); }
+  
+  /* ── 반응 바 ── */
+  .reaction-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--c-border);
+  }
+  .reaction-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: var(--r-full);
+    border: 1.5px solid var(--c-border);
+    background: var(--c-surface);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all .15s;
+    color: var(--c-text);
+  }
+  .reaction-btn:hover { border-color: var(--c-primary); background: var(--c-primary-light); }
+  .reaction-btn.active { border-color: var(--c-primary); background: var(--c-primary-light); color: var(--c-primary); }
+  .reaction-count { font-size: 12px; color: var(--c-muted); }
+  
+  /* ── 별점 ── */
+  .star-row { display: flex; gap: 2px; }
+  .star-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    transition: transform .1s;
+    padding: 2px;
+    color: #ccc;
+  }
+  .star-btn.filled { color: #FFD166; }
+  .star-btn:hover  { transform: scale(1.2); }
+  
+  /* ── 비밀번호 게이트 ── */
+  .password-gate {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #6C63FF 0%, #a78bfa 55%, #FF6584 100%);
+    padding: 20px;
+  }
+  .password-gate-card {
+    background: var(--c-surface);
+    border-radius: var(--r-xl);
+    padding: 36px 32px;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+  }
+  
+  /* ── 편집 공유 이름 입력 ── */
+  .edit-share-name-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,27,46,.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 800;
+    backdrop-filter: blur(3px);
+  }
+  .edit-share-name-card {
+    background: var(--c-surface);
+    border-radius: var(--r-xl);
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 340px;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+  }
+  

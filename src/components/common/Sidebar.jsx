@@ -1,5 +1,6 @@
 /**
- * components/common/Sidebar.jsx — 수정: 담벼락 메뉴 추가
+ * components/common/Sidebar.jsx
+ * 수정: 공유됨 메뉴 실제 라우트로 연결, 뱃지에 공유 보드 수 표시
  */
 import React from 'react'
 import { NavLink } from 'react-router-dom'
@@ -7,24 +8,24 @@ import useBoardStore from '../../store/useBoardStore'
 import '../../styles/sidebar.css'
 
 const NAV_ITEMS = [
-  { to:'/',        icon:'🏠', label:'홈',         end:true },
-  { to:'/columns', icon:'📋', label:'컬럼 보드',   boardType:'columns' },
-  { to:'/links',   icon:'🔗', label:'링크 보드',   boardType:'links' },
-  { to:'/wall',    icon:'📝', label:'담벼락',       boardType:'wall' },
-  { divider:true },
-  { icon:'🤝', label:'공유됨',   soon:true },
-  { icon:'⭐', label:'즐겨찾기', soon:true },
-  { divider:true },
-  { icon:'⚙️', label:'설정',     soon:true },
+  { to: '/',        icon: '🏠', label: '홈',         end: true },
+  { to: '/columns', icon: '📋', label: '컬럼 보드',   boardType: 'columns' },
+  { to: '/links',   icon: '🔗', label: '링크 보드',   boardType: 'links' },
+  { to: '/wall',    icon: '📝', label: '담벼락',       boardType: 'wall' },
+  { divider: true },
+  { to: '/shared',  icon: '🤝', label: '공유 중',     sharedCount: true },
+  { icon: '⭐', label: '즐겨찾기', soon: true },
+  { divider: true },
+  { icon: '⚙️', label: '설정', soon: true },
 ]
 
-export default function Sidebar({ onNewBoard }) {
+export default function Sidebar() {
   const collapsed     = useBoardStore((s) => s.sidebarCollapsed)
-  const toggleSidebar = useBoardStore((s) => s.toggleSidebar)
   const showToast     = useBoardStore((s) => s.showToast)
   const boards        = useBoardStore((s) => s.boards)
 
-  const countOf = (type) => boards.filter((b) => b.type === type).length
+  const countOf      = (type) => boards.filter((b) => b.type === type).length
+  const sharedCount  = boards.filter((b) => b.is_public).length
 
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
@@ -35,12 +36,12 @@ export default function Sidebar({ onNewBoard }) {
 
       <nav className="sidebar-nav" aria-label="메인 메뉴">
         {NAV_ITEMS.map((item, i) => {
-          if (item.divider) return <div key={i} className="divider" style={{ margin:'8px 12px' }} />
+          if (item.divider) return <div key={i} className="divider" style={{ margin: '8px 12px' }} />
 
           if (item.soon) {
             return (
               <button key={item.label} className="nav-item"
-                onClick={() => showToast('곧 출시 예정입니다! 🚀','info')}
+                onClick={() => showToast('곧 출시 예정입니다! 🚀', 'info')}
                 title={collapsed ? item.label : undefined}>
                 <span className="nav-icon">{item.icon}</span>
                 {!collapsed && <span className="nav-label">{item.label}</span>}
@@ -49,7 +50,9 @@ export default function Sidebar({ onNewBoard }) {
             )
           }
 
-          const count = item.boardType ? countOf(item.boardType) : null
+          const count = item.sharedCount
+            ? sharedCount
+            : item.boardType ? countOf(item.boardType) : null
 
           return (
             <NavLink key={item.to} to={item.to} end={item.end}
@@ -57,7 +60,9 @@ export default function Sidebar({ onNewBoard }) {
               title={collapsed ? item.label : undefined}>
               <span className="nav-icon">{item.icon}</span>
               {!collapsed && <span className="nav-label">{item.label}</span>}
-              {!collapsed && count !== null && <span className="nav-badge">{count}</span>}
+              {!collapsed && count !== null && count > 0 && (
+                <span className="nav-badge">{count}</span>
+              )}
             </NavLink>
           )
         })}

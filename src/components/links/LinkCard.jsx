@@ -1,29 +1,25 @@
 /**
- * components/links/LinkCard.jsx
- * 수정: 인증 기반 수정 권한 체크, LinkifiedText 적용
+ * components/links/LinkCard.jsx — 수정: reactionType prop 추가
  */
 import React from 'react'
 import { getHostname, tagBadgeClass, importanceBadgeClass, relativeDate } from '../../utils/helpers'
 import useAuthStore from '../../store/useAuthStore'
 import LinkifiedText from '../common/LinkifiedText'
+import ReactionBar from '../common/ReactionBar'
 
-export default function LinkCard({ boardId, link, viewMode = 'grid', onEdit }) {
+export default function LinkCard({ boardId, link, viewMode = 'grid', onEdit, reactionType = 'none' }) {
   const isOwnerOf = useAuthStore((s) => s.isOwnerOf)
   const canEdit   = useAuthStore((s) => s.canEdit)
   const canModify = canEdit() && isOwnerOf(link.author)
 
-  const open = (e) => {
-    e.stopPropagation()
-    window.open(link.url, '_blank', 'noopener,noreferrer')
-  }
+  const open = (e) => { e.stopPropagation(); window.open(link.url, '_blank', 'noopener,noreferrer') }
   const handleClick = () => { if (canModify) onEdit?.(link) }
   const attachCount = (link.attachments ?? []).length
   const desc = link.desc || link.description || ''
 
   if (viewMode === 'list') {
     return (
-      <article className="link-card list"
-        onClick={handleClick}
+      <article className="link-card list" onClick={handleClick}
         style={{ cursor: canModify ? 'pointer' : 'default' }}>
         <div className="link-card-emoji">{link.emoji}</div>
         <div className="link-list-body">
@@ -31,6 +27,7 @@ export default function LinkCard({ boardId, link, viewMode = 'grid', onEdit }) {
           {desc && <div className="link-desc"><LinkifiedText text={desc} /></div>}
           <div className="link-url">↗ {getHostname(link.url)}</div>
           {attachCount > 0 && <div style={{ fontSize:11, color:'var(--c-primary)' }}>📎 {attachCount}개</div>}
+          <ReactionBar boardId={boardId} itemId={link.id} itemType="link" reactionType={reactionType} />
         </div>
         <div className="link-list-meta">
           <span className={`badge ${importanceBadgeClass(link.importance)}`}>{link.importance}</span>
@@ -47,24 +44,17 @@ export default function LinkCard({ boardId, link, viewMode = 'grid', onEdit }) {
   }
 
   return (
-    <article className="link-card grid"
-      onClick={handleClick}
-      style={{ cursor: canModify ? 'pointer' : 'default' }}
-      aria-label={`${link.title}${canModify ? ' — 클릭하여 수정' : ''}`}
-    >
+    <article className="link-card grid" onClick={handleClick}
+      style={{ cursor: canModify ? 'pointer' : 'default' }}>
       <div className="link-card-header">
         <div className="link-card-emoji">{link.emoji}</div>
         <div className="link-title">{link.title}</div>
-        {!canModify && (
-          <span title="작성자만 수정 가능" style={{ fontSize:12, color:'var(--c-muted)', flexShrink:0 }}>🔒</span>
-        )}
+        {!canModify && <span title="작성자만 수정 가능" style={{ fontSize:12, color:'var(--c-muted)', flexShrink:0 }}>🔒</span>}
       </div>
       <div className="link-card-body">
         {desc && <div className="link-desc"><LinkifiedText text={desc} /></div>}
         <div className="link-url">↗ {getHostname(link.url)}</div>
-        {attachCount > 0 && (
-          <div style={{ fontSize:11, color:'var(--c-primary)', marginBottom:6 }}>📎 첨부 {attachCount}개</div>
-        )}
+        {attachCount > 0 && <div style={{ fontSize:11, color:'var(--c-primary)', marginBottom:6 }}>📎 첨부 {attachCount}개</div>}
         <div className="link-card-footer">
           <div className="link-tags-row">
             {(link.tags ?? []).slice(0,3).map((t,i) => <span key={t} className={`badge ${tagBadgeClass(i)}`}>{t}</span>)}
@@ -78,6 +68,7 @@ export default function LinkCard({ boardId, link, viewMode = 'grid', onEdit }) {
           </span>
           <button className="btn btn-primary btn-sm" onClick={open}>이동 ↗</button>
         </div>
+        <ReactionBar boardId={boardId} itemId={link.id} itemType="link" reactionType={reactionType} />
       </div>
     </article>
   )
