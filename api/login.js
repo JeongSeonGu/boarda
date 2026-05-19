@@ -1,12 +1,41 @@
 /**
- * api/login.js — Vercel Serverless Function
- * 수정: jsonwebtoken(CJS) → jose(ESM) 교체, 환경변수 누락 처리 강화
+ * api/login.js
+ * 수정: 외부 패키지(jose, jsonwebtoken) 완전 제거
+ *       Node.js 내장 crypto 만으로 JWT HS256 직접 구현
+ *       → Vercel 서버리스 환경에서 패키지 의존성 오류 없음
  */
 
-import { SignJWT } from 'jose'
+import crypto from 'crypto'
 
+/* ── JWT HS256 직접 구현 (외부 패키지 없음) ── */
+function base64url(str) {
+  return Buffer.from(str)
+    .toString('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+}
+
+function signJWT(payload, secret, expiresInHours = 24) {
+  const header  = base64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+  const now     = Math.floor(Date.now() / 1000)
+  const body    = base64url(JSON.stringify({
+    ...payload,
+    iat: now,
+    exp: now + expiresInHours * 3600,
+  }))
+  const sig = crypto
+    .createHmac('sha256', secret)
+    .update(`${header}.${body}`)
+    .digest('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+  return `${header}.${body}.${sig}`
+}
+
+/* ── 핸들러 ── */
 export default async function handler(req, res) {
-  /* ── CORS ── */
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
@@ -28,7 +57,7 @@ export default async function handler(req, res) {
     })
     return res.status(500).json({
       ok: false,
-      msg: '서버 설정 오류 — Vercel 환경변수를 확인하세요 (PHP_AUTH_URL, PHP_API_SECRET, JWT_SECRET)',
+      msg: '서버 설정 오류 — Vercel 환경변수를 확인하세요',
     })
   }
 
@@ -51,37 +80,36 @@ export default async function handler(req, res) {
     })
 
     const rawText = await phpRes.text()
+    console.log('[login] PHP 응답 상태:', phpRes.status)
+    console.log('[login] PHP 응답 본문:', rawText.slice(0, 300))
 
-    /* PHP 서버가 HTML 오류 페이지를 반환하는 경우 처리 */
     try {
       phpResult = JSON.parse(rawText)
     } catch {
-      console.error('[login] PHP 서버 응답이 JSON이 아님:', rawText.slice(0, 200))
       return res.status(502).json({
         ok: false,
-        msg: 'PHP 인증 서버 응답 오류 — auth.php 파일과 URL을 확인하세요',
+        msg: 'PHP 인증 서버 응답이 올바르지 않습니다. auth.php URL을 확인하세요.',
       })
     }
 
-    if (!phpRes.ok || !phpResult.ok) {
+    if (!phpResult.ok) {
       return res.status(401).json({
         ok: false,
-        msg: phpResult?.msg || '아이디 또는 비밀번호가 올바르지 않습니다',
+        msg: phpResult.msg || '아이디 또는 비밀번호가 올바르지 않습니다',
       })
     }
 
   } catch (err) {
-    console.error('[login] PHP 서버 연결 오류:', err.message)
+    console.error('[login] PHP 연결 오류:', err.message)
     return res.status(502).json({
       ok: false,
-      msg: 'PHP 인증 서버에 연결할 수 없습니다 — URL을 확인하세요: ' + PHP_AUTH_URL,
+      msg: 'PHP 인증 서버에 연결할 수 없습니다: ' + PHP_AUTH_URL,
     })
   }
 
-  /* ── JWT 발급 (jose 라이브러리, ESM 완전 호환) ── */
+  /* ── JWT 발급 ── */
   try {
-    const secretKey = new TextEncoder().encode(JWT_SECRET)
-    const payload   = {
+    const payload = {
       id:            phpResult.data.id,
       username:      phpResult.data.username,
       name:          phpResult.data.name,
@@ -92,16 +120,11 @@ export default async function handler(req, res) {
       class_name:    phpResult.data.class_name,
     }
 
-    const token = await new SignJWT(payload)
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('24h')
-      .sign(secretKey)
-
+    const token = signJWT(payload, JWT_SECRET, 24)
     return res.status(200).json({ ok: true, token, user: payload })
 
   } catch (err) {
-    console.error('[login] JWT 발급 오류:', err.message)
-    return res.status(500).json({ ok: false, msg: 'JWT 발급 실패' })
+    console.error('[login] JWT 오류:', err.message)
+    return res.status(500).json({ ok: false, msg: 'JWT 생성 실패' })
   }
 }
