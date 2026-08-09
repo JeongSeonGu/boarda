@@ -1,5 +1,6 @@
 /**
- * components/modals/CreateBoardModal.jsx — 수정: wall 타입 추가
+ * components/modals/CreateBoardModal.jsx
+ * 수정: defaultFolderId 지원 — 폴더 내에서 보드 생성 시 자동 배정
  */
 import React, { useState } from 'react'
 import Modal from '../common/Modal'
@@ -14,23 +15,29 @@ const BOARD_TYPES = [
   { value:'wall',    icon:'📝', name:'담벼락',      desc:'자유롭게 포스트잇 메모를 붙이는 보드' },
 ]
 
-export default function CreateBoardModal({ isOpen, onClose, defaultType = 'columns', onCreated }) {
+export default function CreateBoardModal({
+  isOpen, onClose, defaultType = 'columns', defaultFolderId = null, onCreated,
+}) {
   const createBoard = useBoardStore((s) => s.createBoard)
-  const [type,  setType]  = useState(defaultType)
-  const [name,  setName]  = useState('')
-  const [desc,  setDesc]  = useState('')
-  const [color, setColor] = useState(COLORS[0])
-  const [error, setError] = useState('')
+  const folders     = useBoardStore((s) => s.folders)
 
-  // defaultType 변경 시 동기화
-  React.useEffect(() => { setType(defaultType) }, [defaultType, isOpen])
+  const [type,     setType]     = useState(defaultType)
+  const [name,     setName]     = useState('')
+  const [desc,     setDesc]     = useState('')
+  const [color,    setColor]    = useState(COLORS[0])
+  const [folderId, setFolderId] = useState(defaultFolderId)
+  const [error,    setError]    = useState('')
+
+  React.useEffect(() => {
+    if (isOpen) { setType(defaultType); setFolderId(defaultFolderId) }
+  }, [defaultType, defaultFolderId, isOpen])
 
   const reset = () => { setName(''); setDesc(''); setColor(COLORS[0]); setError('') }
   const handleClose = () => { reset(); onClose() }
 
   const handleSubmit = async () => {
     if (!name.trim()) { setError('보드 이름을 입력해주세요'); return }
-    const id = await createBoard({ type, name: name.trim(), desc, color })
+    const id = await createBoard({ type, name: name.trim(), desc, color, folderId })
     reset(); onClose()
     onCreated?.(id)
   }
@@ -44,7 +51,7 @@ export default function CreateBoardModal({ isOpen, onClose, defaultType = 'colum
         </>
       }
     >
-      {/* 보드 종류 — 3개 */}
+      {/* 보드 종류 */}
       <div className="form-group">
         <label className="form-label">보드 종류</label>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10 }}>
@@ -65,6 +72,7 @@ export default function CreateBoardModal({ isOpen, onClose, defaultType = 'colum
         </div>
       </div>
 
+      {/* 보드 이름 */}
       <div className="form-group">
         <label className="form-label" htmlFor="board-name">보드 이름 *</label>
         <input id="board-name" className="form-input" value={name} autoFocus
@@ -74,6 +82,7 @@ export default function CreateBoardModal({ isOpen, onClose, defaultType = 'colum
         {error && <p style={{ fontSize:12, color:'var(--c-danger)', marginTop:4 }}>{error}</p>}
       </div>
 
+      {/* 설명 */}
       <div className="form-group">
         <label className="form-label" htmlFor="board-desc">설명 (선택)</label>
         <textarea id="board-desc" className="form-textarea" value={desc}
@@ -82,6 +91,22 @@ export default function CreateBoardModal({ isOpen, onClose, defaultType = 'colum
           style={{ minHeight:56 }} />
       </div>
 
+      {/* 폴더 선택 */}
+      {folders.length > 0 && (
+        <div className="form-group">
+          <label className="form-label">폴더에 추가 (선택)</label>
+          <select className="form-input"
+            value={folderId ?? ''}
+            onChange={(e) => setFolderId(e.target.value || null)}>
+            <option value="">📋 폴더 없음</option>
+            {folders.map((f) => (
+              <option key={f.id} value={f.id}>{f.icon} {f.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* 색상 */}
       <div className="form-group" style={{ marginBottom:0 }}>
         <label className="form-label">테마 색상</label>
         <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>

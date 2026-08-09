@@ -195,15 +195,3 @@
 .wall-empty-icon { font-size: 56px; margin-bottom: 12px; opacity: .5; }
 .wall-empty-text { font-size: 16px; font-weight: 700; color: var(--c-text-secondary); }
 .wall-empty-sub  { font-size: 13px; margin-top: 4px; }
-
-/* ── 격자 모드 카드 ── */
-.wall-card-grid {
-  position: relative !important;
-  left: auto !important;
-  top: auto !important;
-  width: 100% !important;
-  box-shadow: 2px 3px 10px rgba(0,0,0,.12);
-}
-.wall-card-grid:hover {
-  box-shadow: 4px 6px 20px rgba(0,0,0,.16);
-}

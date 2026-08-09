@@ -1,6 +1,6 @@
 /**
  * store/useBoardStore.js
- * 수정: reorderWallPosts, bringWallPostToFront 추가
+ * 수정: folders CRUD 추가, boards에 folder_id 지원
  */
 import { create } from 'zustand'
 import { supabase } from '../utils/supabase'
@@ -16,22 +16,26 @@ function randomPos(index = 0) {
     pos_y: 40 + Math.floor(index / cols) * 200 + Math.random() * 20,
   }
 }
+
 async function loadAllBoards() {
   const [
     { data: boards, error: bErr },
+    { data: folders },
     { data: columns },
     { data: posts },
     { data: links },
     { data: wallPosts },
   ] = await Promise.all([
     supabase.from('boards').select('*').order('created_at', { ascending: false }),
+    supabase.from('folders').select('*').order('created_at', { ascending: false }),
     supabase.from('columns').select('*').order('position'),
     supabase.from('posts').select('*').order('created_at'),
     supabase.from('links').select('*').order('created_at'),
     supabase.from('wall_posts').select('*').order('z_order').order('created_at'),
   ])
   if (bErr) throw bErr
-  return (boards ?? []).map((b) => ({
+
+  const enrichedBoards = (boards ?? []).map((b) => ({
     ...b, desc: b.description ?? '',
     columns: b.type === 'columns'
       ? (columns ?? []).filter((c) => c.board_id === b.id)
@@ -40,7 +44,10 @@ async function loadAllBoards() {
     links:      b.type === 'links' ? (links ?? []).filter((l) => l.board_id === b.id) : undefined,
     wall_posts: b.type === 'wall'  ? (wallPosts ?? []).filter((w) => w.board_id === b.id) : undefined,
   }))
+
+  return { boards: enrichedBoards, folders: folders ?? [] }
 }
+
 function urlToStoragePath(url = '') {
   try {
     const u = new URL(url)
@@ -73,7 +80,11 @@ function collectStoragePaths(board) {
 }
 
 const useBoardStore = create((set, get) => ({
-  boards: [], sidebarCollapsed: false, toasts: [], loading: false,
+  boards: [],
+  folders: [],
+  sidebarCollapsed: false,
+  toasts: [],
+  loading: false,
   author: getStoredAuthor(),
 
   setAuthor: (name) => {
@@ -91,20 +102,85 @@ const useBoardStore = create((set, get) => ({
 
   fetchBoards: async () => {
     set({ loading: true })
-    try { set({ boards: await loadAllBoards() }) }
-    catch (e) { console.error('fetchBoards:', e); get().showToast('데이터 불러오기 실패', 'error') }
-    finally { set({ loading: false }) }
+    try {
+      const { boards, folders } = await loadAllBoards()
+      set({ boards, folders })
+    } catch (e) {
+      console.error('fetchBoards:', e)
+      get().showToast('데이터 불러오기 실패', 'error')
+    } finally {
+      set({ loading: false })
+    }
   },
 
-  /* ── 보드 생성 ── */
-  createBoard: async ({ type, name, desc = '', color = '#6C63FF' }) => {
+  /* ══════════════════════════════════════
+     폴더 CRUD
+  ══════════════════════════════════════ */
+
+  /** 폴더 생성 */
+  createFolder: async ({ name, desc = '', color = '#6C63FF', icon = '📁' }) => {
+    const id = genId('f')
+    const { error } = await supabase.from('folders').insert({
+      id, name, description: desc, color, icon, author: get().author,
+    })
+    if (error) { get().showToast('폴더 생성 실패: ' + error.message, 'error'); return null }
+    const { boards, folders } = await loadAllBoards()
+    set({ boards, folders })
+    get().showToast('폴더가 생성되었습니다! 📁', 'success')
+    return id
+  },
+
+  /** 폴더 수정 */
+  updateFolder: async (folderId, patch) => {
+    const { error } = await supabase.from('folders').update(patch).eq('id', folderId)
+    if (error) { get().showToast('수정 실패', 'error'); return }
+    set((s) => ({
+      folders: s.folders.map((f) =>
+        f.id !== folderId ? f : { ...f, ...patch, desc: patch.description ?? f.desc }
+      ),
+    }))
+    get().showToast('수정되었습니다', 'success')
+  },
+
+  /** 폴더 삭제 (보드는 folder_id=null 로 이동, 삭제 아님) */
+  deleteFolder: async (folderId) => {
+    /* 폴더 내 보드들의 folder_id를 null로 */
+    await supabase.from('boards').update({ folder_id: null }).eq('folder_id', folderId)
+    await supabase.from('folders').delete().eq('id', folderId)
+    const { boards, folders } = await loadAllBoards()
+    set({ boards, folders })
+    get().showToast('폴더가 삭제되었습니다 (보드는 유지됩니다)', 'info')
+  },
+
+  /** 보드를 폴더로 이동 (folderId=null 이면 폴더 없음) */
+  moveBoardToFolder: async (boardId, folderId) => {
+    const { error } = await supabase.from('boards').update({ folder_id: folderId }).eq('id', boardId)
+    if (error) { get().showToast('이동 실패', 'error'); return }
+    set((s) => ({
+      boards: s.boards.map((b) =>
+        b.id !== boardId ? b : { ...b, folder_id: folderId }
+      ),
+    }))
+    const folderName = folderId
+      ? get().folders.find((f) => f.id === folderId)?.name
+      : null
+    get().showToast(folderName ? `'${folderName}' 폴더로 이동되었습니다` : '폴더 밖으로 이동되었습니다', 'success')
+  },
+
+  /* ══════════════════════════════════════
+     보드 CRUD
+  ══════════════════════════════════════ */
+
+  createBoard: async ({ type, name, desc = '', color = '#6C63FF', folderId = null }) => {
     const id = genId('b')
     const { error } = await supabase.from('boards').insert({
       id, type, name, description: desc, color, author: get().author,
       is_public: false, share_mode: 'private',
+      folder_id: folderId,
     })
     if (error) { get().showToast('보드 생성 실패: ' + error.message, 'error'); return null }
-    try { set({ boards: await loadAllBoards() }) } catch {}
+    const { boards, folders } = await loadAllBoards()
+    set({ boards, folders })
     get().showToast('보드가 생성되었습니다! 🎉', 'success')
     return id
   },
@@ -141,11 +217,7 @@ const useBoardStore = create((set, get) => ({
     get().showToast('공유가 해제되었습니다', 'info')
   },
 
-  /* ══════════════════════════════════════
-     드래그앤드롭 순서 변경
-  ══════════════════════════════════════ */
-
-  /** 컬럼 순서 변경 */
+  /* DnD 순서 변경 */
   reorderColumns: async (boardId, orderedColIds) => {
     set((s) => ({
       boards: s.boards.map((b) => {
@@ -161,7 +233,6 @@ const useBoardStore = create((set, get) => ({
     )
   },
 
-  /** 게시물 순서/컬럼 간 이동 */
   reorderPosts: async (boardId, srcColId, dstColId, postId, dstIndex) => {
     set((s) => ({
       boards: s.boards.map((b) => {
@@ -183,7 +254,6 @@ const useBoardStore = create((set, get) => ({
     }
   },
 
-  /** 링크 순서 변경 */
   reorderLinks: async (boardId, orderedLinkIds) => {
     set((s) => ({
       boards: s.boards.map((b) => {
@@ -199,12 +269,7 @@ const useBoardStore = create((set, get) => ({
     ).catch(() => {})
   },
 
-  /**
-   * 담벼락 격자 모드 순서 변경
-   * z_order 를 인덱스 기반으로 일괄 업데이트
-   */
   reorderWallPosts: async (boardId, orderedPostIds) => {
-    /* 로컬 즉시 반영 */
     set((s) => ({
       boards: s.boards.map((b) => {
         if (b.id !== boardId) return b
@@ -217,7 +282,6 @@ const useBoardStore = create((set, get) => ({
         }
       }),
     }))
-    /* DB 반영 */
     await Promise.all(
       orderedPostIds.map((id, idx) =>
         supabase.from('wall_posts').update({ z_order: idx }).eq('id', id)
@@ -225,11 +289,7 @@ const useBoardStore = create((set, get) => ({
     )
   },
 
-  /**
-   * 자유 모드: 클릭한 카드를 최상위로 올리기
-   */
   bringWallPostToFront: async (boardId, postId, newZOrder) => {
-    /* 로컬 즉시 반영 */
     set((s) => ({
       boards: s.boards.map((b) =>
         b.id !== boardId ? b : {
@@ -240,11 +300,10 @@ const useBoardStore = create((set, get) => ({
         }
       ),
     }))
-    /* DB 반영 (debounce 없이 즉시 — 빈도 낮음) */
     await supabase.from('wall_posts').update({ z_order: newZOrder }).eq('id', postId)
   },
 
-  /* ── 컬럼 CRUD ── */
+  /* 컬럼 CRUD */
   addColumn: async (boardId) => {
     const board = get().boards.find((b) => b.id === boardId)
     const id = genId('c'), position = (board?.columns ?? []).length
@@ -253,7 +312,7 @@ const useBoardStore = create((set, get) => ({
       color: nextColumnColor(position), position, author: get().author,
     })
     if (error) { get().showToast('컬럼 추가 실패', 'error'); return null }
-    await get().fetchBoards(); return id
+    const { boards, folders } = await loadAllBoards(); set({ boards, folders }); return id
   },
   renameColumn: async (boardId, colId, name) => {
     await supabase.from('columns').update({ name }).eq('id', colId)
@@ -267,7 +326,7 @@ const useBoardStore = create((set, get) => ({
     get().showToast('컬럼이 삭제되었습니다', 'info')
   },
 
-  /* ── 게시물 CRUD ── */
+  /* 게시물 CRUD */
   addPost: async (boardId, colId, { title, content = '', tags = [], attachments = [] }) => {
     const id = genId('p')
     const { error } = await supabase.from('posts').insert({
@@ -276,12 +335,14 @@ const useBoardStore = create((set, get) => ({
       attachments, author: get().author,
     })
     if (error) { get().showToast('게시물 추가 실패', 'error'); return null }
-    await get().fetchBoards(); get().showToast('게시물이 추가되었습니다! ✨', 'success'); return id
+    const { boards, folders } = await loadAllBoards(); set({ boards, folders })
+    get().showToast('게시물이 추가되었습니다! ✨', 'success'); return id
   },
   updatePost: async (boardId, colId, postId, patch) => {
     const { error } = await supabase.from('posts').update(patch).eq('id', postId)
     if (error) { get().showToast('수정 실패', 'error'); return }
-    await get().fetchBoards(); get().showToast('수정되었습니다', 'success')
+    const { boards, folders } = await loadAllBoards(); set({ boards, folders })
+    get().showToast('수정되었습니다', 'success')
   },
   deletePost: async (boardId, colId, postId) => {
     await supabase.from('posts').delete().eq('id', postId)
@@ -291,7 +352,7 @@ const useBoardStore = create((set, get) => ({
     get().showToast('게시물이 삭제되었습니다', 'info')
   },
 
-  /* ── 링크 CRUD ── */
+  /* 링크 CRUD */
   addLink: async (boardId, { title, url, desc = '', category = '기타', importance = '보통', tags = [], attachments = [] }) => {
     const id = genId('l')
     const { error } = await supabase.from('links').insert({
@@ -300,14 +361,16 @@ const useBoardStore = create((set, get) => ({
       emoji: categoryEmoji(category), attachments, author: get().author,
     })
     if (error) { get().showToast('링크 추가 실패', 'error'); return null }
-    await get().fetchBoards(); get().showToast('링크가 추가되었습니다! 🔗', 'success'); return id
+    const { boards, folders } = await loadAllBoards(); set({ boards, folders })
+    get().showToast('링크가 추가되었습니다! 🔗', 'success'); return id
   },
   updateLink: async (boardId, linkId, patch) => {
     const { error } = await supabase.from('links').update({
       ...patch, ...(patch.category ? { emoji: categoryEmoji(patch.category) } : {})
     }).eq('id', linkId)
     if (error) { get().showToast('수정 실패', 'error'); return }
-    await get().fetchBoards(); get().showToast('수정되었습니다', 'success')
+    const { boards, folders } = await loadAllBoards(); set({ boards, folders })
+    get().showToast('수정되었습니다', 'success')
   },
   deleteLink: async (boardId, linkId) => {
     await supabase.from('links').delete().eq('id', linkId)
@@ -316,26 +379,26 @@ const useBoardStore = create((set, get) => ({
     get().showToast('링크가 삭제되었습니다', 'info')
   },
 
-  /* ── 담벼락 CRUD ── */
+  /* 담벼락 CRUD */
   addWallPost: async (boardId, { content, color, attachments = [] }) => {
     const board = get().boards.find((b) => b.id === boardId)
     const wallPosts = board?.wall_posts ?? []
-    const id = genId('w')
-    const { pos_x, pos_y } = randomPos(wallPosts.length)
+    const id = genId('w'), { pos_x, pos_y } = randomPos(wallPosts.length)
     const maxZ = Math.max(0, ...wallPosts.map((w) => w.z_order ?? 0))
     const { error } = await supabase.from('wall_posts').insert({
       id, board_id: boardId, content, color,
-      pos_x, pos_y, width: 200,
-      z_order: maxZ + 1,
+      pos_x, pos_y, width: 200, z_order: maxZ + 1,
       attachments, author: get().author,
     })
     if (error) { get().showToast('메모 추가 실패', 'error'); return null }
-    await get().fetchBoards(); get().showToast('메모가 붙여졌습니다! 📝', 'success'); return id
+    const { boards, folders } = await loadAllBoards(); set({ boards, folders })
+    get().showToast('메모가 붙여졌습니다! 📝', 'success'); return id
   },
   updateWallPost: async (boardId, postId, patch) => {
     const { error } = await supabase.from('wall_posts').update(patch).eq('id', postId)
     if (error) { get().showToast('수정 실패', 'error'); return }
-    await get().fetchBoards(); get().showToast('수정되었습니다', 'success')
+    const { boards, folders } = await loadAllBoards(); set({ boards, folders })
+    get().showToast('수정되었습니다', 'success')
   },
   moveWallPost: async (boardId, postId, pos_x, pos_y) => {
     await supabase.from('wall_posts').update({ pos_x, pos_y }).eq('id', postId)
