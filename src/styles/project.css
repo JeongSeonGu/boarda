@@ -1,0 +1,670 @@
+/* ──────────────────────────────────────────
+   project.css — 프로젝트 보드 스타일
+────────────────────────────────────────── */
+
+/* 탭 네비게이션 */
+.proj-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 2px solid var(--c-border);
+  margin-bottom: 0;
+  padding: 0 4px;
+}
+.proj-tab {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--c-muted);
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.proj-tab:hover { color: var(--c-text); }
+.proj-tab.active {
+  color: var(--c-primary);
+  border-bottom-color: var(--c-primary);
+  font-weight: 600;
+}
+
+/* 업무 목록 툴바 */
+.task-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  flex-wrap: wrap;
+}
+.task-toolbar-left { display: flex; align-items: center; gap: 6px; flex: 1; }
+.task-toolbar-right { display: flex; align-items: center; gap: 6px; }
+
+.task-filter-select {
+  height: 32px;
+  padding: 0 10px;
+  border: 1.5px solid var(--c-border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  cursor: pointer;
+}
+.task-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1.5px solid var(--c-border);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--c-surface);
+  color: var(--c-text);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.task-chip-btn:hover { background: var(--c-hover); }
+.task-chip-btn.active {
+  background: var(--c-primary-light);
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+}
+.task-chip-btn .chip-x {
+  font-size: 10px;
+  opacity: 0.6;
+  margin-left: 2px;
+}
+
+/* 검색창 */
+.task-search-wrap {
+  position: relative;
+}
+.task-search-wrap input {
+  height: 32px;
+  padding: 0 10px 0 30px;
+  border: 1.5px solid var(--c-border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  width: 180px;
+  transition: border-color 0.15s, width 0.2s;
+}
+.task-search-wrap input:focus {
+  outline: none;
+  border-color: var(--c-primary);
+  width: 220px;
+}
+.task-search-icon {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: var(--c-muted);
+  pointer-events: none;
+}
+
+/* 업무 추가 버튼 */
+.task-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--c-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.task-add-btn:hover { background: var(--c-primary-hover, #5350e0); }
+
+/* 테이블 */
+.task-table-wrap {
+  border: 1.5px solid var(--c-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--c-surface);
+}
+.task-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.task-table th {
+  background: var(--c-hover);
+  padding: 9px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--c-muted);
+  border-bottom: 1.5px solid var(--c-border);
+  white-space: nowrap;
+  user-select: none;
+}
+.task-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--c-border);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.task-table tr:last-child td { border-bottom: none; }
+.task-table tbody tr { cursor: pointer; transition: background 0.1s; }
+.task-table tbody tr:hover { background: var(--c-hover); }
+
+/* 그룹 행 */
+.task-group-row td {
+  background: var(--c-bg);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-bottom: 1.5px solid var(--c-border);
+  cursor: default;
+}
+.task-group-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  margin-right: 6px;
+  color: var(--c-muted);
+  padding: 0;
+}
+
+/* 업무 이름 셀 */
+.task-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 200px;
+  max-width: 360px;
+}
+.task-name-cell .task-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  color: var(--c-text);
+}
+.task-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--c-primary-light);
+  color: var(--c-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 상태 배지 */
+.task-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.task-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 진척도 바 */
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 90px;
+}
+.progress-bar-bg {
+  flex: 1;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--c-border);
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--c-primary);
+  transition: width 0.3s;
+}
+.progress-pct {
+  font-size: 11px;
+  color: var(--c-muted);
+  min-width: 28px;
+}
+
+/* 날짜 셀 */
+.task-date { color: var(--c-muted); font-size: 12px; }
+.task-date.overdue { color: #EF4444; font-weight: 600; }
+
+/* 우선순위 배지 */
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+/* 빈 상태 */
+.task-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--c-muted);
+}
+.task-empty-icon { font-size: 40px; margin-bottom: 12px; }
+.task-empty-text { font-size: 14px; }
+
+/* 업무 패널 (슬라이드) */
+.task-panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  z-index: 300;
+  display: flex;
+  justify-content: flex-end;
+}
+.task-panel {
+  width: 480px;
+  max-width: 95vw;
+  height: 100%;
+  background: var(--c-surface);
+  box-shadow: -8px 0 32px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  animation: panelSlideIn 0.22s ease;
+  overflow: hidden;
+}
+@keyframes panelSlideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+.task-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1.5px solid var(--c-border);
+  gap: 10px;
+  flex-shrink: 0;
+}
+.task-panel-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--c-muted);
+}
+.task-panel-header-left strong { color: var(--c-text); font-size: 14px; }
+.task-panel-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--c-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background 0.12s;
+}
+.task-panel-close:hover { background: var(--c-hover); }
+
+.task-panel-title-input {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: var(--font-head);
+  border: none;
+  border-bottom: 1.5px solid var(--c-border);
+  background: transparent;
+  color: var(--c-text);
+  outline: none;
+  flex-shrink: 0;
+}
+.task-panel-title-input::placeholder { color: var(--c-muted); font-weight: 400; }
+
+.task-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.task-field-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--c-border);
+  gap: 12px;
+}
+.task-field-row:last-child { border-bottom: none; }
+.task-field-label {
+  font-size: 13px;
+  color: var(--c-muted);
+  font-weight: 500;
+}
+.task-field-value {
+  font-size: 13px;
+  color: var(--c-text);
+}
+
+/* 상태 드롭다운 버튼 */
+.status-dropdown-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1.5px solid var(--c-border);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--c-surface);
+  transition: border-color 0.12s;
+}
+.status-dropdown-btn:hover { border-color: var(--c-primary); }
+
+/* 패널 내 인풋들 */
+.task-panel-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1.5px solid var(--c-border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.task-panel-input:focus { border-color: var(--c-primary); }
+
+.task-panel-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 10px;
+  border: 1.5px solid var(--c-border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+.task-panel-textarea:focus { border-color: var(--c-primary); }
+.task-panel-textarea::placeholder { color: var(--c-muted); }
+
+.task-panel-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 16px 0 8px;
+}
+.task-panel-content-area {
+  margin-top: 8px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 추가항목 펼치기 */
+.task-extra-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--c-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  font-weight: 500;
+}
+.task-extra-toggle:hover { text-decoration: underline; }
+
+/* 패널 푸터 */
+.task-panel-footer {
+  padding: 14px 20px;
+  border-top: 1.5px solid var(--c-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  background: var(--c-surface);
+}
+.task-subtask-label {
+  font-size: 12px;
+  color: var(--c-muted);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* 프로젝트 설명 탭 */
+.proj-desc-wrap {
+  max-width: 720px;
+  padding: 24px 0;
+}
+.proj-desc-textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 14px;
+  border: 1.5px solid var(--c-border);
+  border-radius: 10px;
+  font-size: 14px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.7;
+}
+.proj-desc-textarea:focus { border-color: var(--c-primary); }
+
+/* 인사이트 탭 */
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  padding: 20px 0;
+}
+.insight-card {
+  background: var(--c-surface);
+  border: 1.5px solid var(--c-border);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+.insight-number {
+  font-size: 36px;
+  font-weight: 800;
+  font-family: var(--font-head);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.insight-label {
+  font-size: 12px;
+  color: var(--c-muted);
+  font-weight: 500;
+}
+.insight-status-bars { padding: 16px 0; display: flex; flex-direction: column; gap: 10px; }
+.insight-status-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.insight-status-name { min-width: 60px; color: var(--c-text); }
+.insight-status-bar-bg { flex: 1; height: 8px; border-radius: 6px; background: var(--c-border); overflow: hidden; }
+.insight-status-bar-fill { height: 100%; border-radius: 6px; }
+.insight-status-count { min-width: 30px; text-align: right; color: var(--c-muted); font-size: 12px; }
+
+/* 설정 탭 */
+.proj-settings-wrap { max-width: 600px; padding: 20px 0; display: flex; flex-direction: column; gap: 28px; }
+.proj-settings-section { display: flex; flex-direction: column; gap: 12px; }
+.proj-settings-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-text);
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid var(--c-border);
+}
+.proj-status-list { display: flex; flex-direction: column; gap: 8px; }
+.proj-status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--c-border);
+  border-radius: 10px;
+  background: var(--c-surface);
+}
+.proj-status-color-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1.5px var(--c-border);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.proj-status-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text);
+  outline: none;
+}
+.proj-status-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--c-muted);
+  font-size: 14px;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.proj-status-del:hover { background: var(--c-hover); color: #EF4444; }
+.proj-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--c-primary);
+  background: none;
+  border: 1.5px dashed var(--c-border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: border-color 0.12s, background 0.12s;
+}
+.proj-add-btn:hover { border-color: var(--c-primary); background: var(--c-primary-light); }
+
+/* 뱃지 목록 */
+.proj-badge-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.proj-badge-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1.5px solid var(--c-border);
+  border-radius: 20px;
+  background: var(--c-surface);
+  font-size: 12px;
+  font-weight: 500;
+}
+.proj-badge-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--c-muted);
+  font-size: 11px;
+  padding: 0 2px;
+}
+.proj-badge-del:hover { color: #EF4444; }
+.proj-badge-input-row { display: flex; gap: 6px; margin-top: 6px; }
+.proj-badge-input {
+  flex: 1;
+  height: 32px;
+  padding: 0 10px;
+  border: 1.5px solid var(--c-border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  outline: none;
+}
+.proj-badge-input:focus { border-color: var(--c-primary); }
+
+/* 색상 피커 포함 드롭다운 */
+.status-color-picker {
+  position: absolute;
+  z-index: 400;
+  background: var(--c-surface);
+  border: 1.5px solid var(--c-border);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 160px;
+}
+.status-color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.1s, border-color 0.1s;
+}
+.status-color-swatch:hover { transform: scale(1.2); }
+.status-color-swatch.selected { border-color: var(--c-text); }
+
+/* 첨부파일 탭 */
+.proj-attach-wrap { padding: 20px 0; }
+
+/* 상태 드롭다운 팝업 */
+.status-popup {
+  position: absolute;
+  z-index: 500;
+  background: var(--c-surface);
+  border: 1.5px solid var(--c-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  min-width: 140px;
+  overflow: hidden;
+}
+.status-popup-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.1s;
+}
+.status-popup-item:hover { background: var(--c-hover); }

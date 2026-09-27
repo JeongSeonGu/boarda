@@ -13,6 +13,7 @@ const BOARD_TYPES = [
   { value:'columns', icon:'📋', name:'컬럼 보드',  desc:'섹션별로 정보를 정리하는 칸반 스타일' },
   { value:'links',   icon:'🔗', name:'링크 보드',  desc:'사이트와 링크를 태그로 체계적으로 관리' },
   { value:'wall',    icon:'📝', name:'담벼락',      desc:'자유롭게 포스트잇 메모를 붙이는 보드' },
+  { value:'project', icon:'📁', name:'프로젝트',   desc:'업무 목록으로 프로젝트를 체계적으로 관리' },
 ]
 
 export default function CreateBoardModal({
@@ -54,7 +55,7 @@ export default function CreateBoardModal({
       {/* 보드 종류 */}
       <div className="form-group">
         <label className="form-label">보드 종류</label>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
           {BOARD_TYPES.map((t) => (
             <div key={t.value} onClick={() => setType(t.value)}
               style={{

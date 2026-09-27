@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { to: '/columns', icon: '📋', label: '컬럼 보드',   boardType: 'columns' },
   { to: '/links',   icon: '🔗', label: '링크 보드',   boardType: 'links' },
   { to: '/wall',    icon: '📝', label: '담벼락',       boardType: 'wall' },
+  { to: '/project', icon: '📁', label: '프로젝트',     boardType: 'project' },
   { divider: true },
   { to: '/shared',  icon: '🤝', label: '공유 중',     sharedCount: true },
   { icon: '⭐', label: '즐겨찾기', soon: true },

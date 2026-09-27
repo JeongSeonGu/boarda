@@ -1,5 +1,5 @@
 /**
- * pages/BoardDetailPage.jsx — 수정: wall 타입 분기 추가
+ * pages/BoardDetailPage.jsx — 수정: project 타입 분기 추가
  */
 import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -7,6 +7,7 @@ import useBoardStore from '../store/useBoardStore'
 import ColumnsBoardView from './ColumnsBoardView'
 import LinksBoardView from './LinksBoardView'
 import WallBoardView from './WallBoardView'
+import ProjectBoardView from './ProjectBoardView'
 import Button from '../components/common/Button'
 
 export default function BoardDetailPage({ onShareBoard }) {
@@ -32,9 +33,10 @@ export default function BoardDetailPage({ onShareBoard }) {
     </div>
   )
 
-  if (board.type === 'columns') return <ColumnsBoardView board={board} onShareBoard={onShareBoard} />
-  if (board.type === 'links')   return <LinksBoardView   board={board} onShareBoard={onShareBoard} />
-  if (board.type === 'wall')    return <WallBoardView    board={board} onShareBoard={onShareBoard} />
+  if (board.type === 'columns') return <ColumnsBoardView  board={board} onShareBoard={onShareBoard} />
+  if (board.type === 'links')   return <LinksBoardView    board={board} onShareBoard={onShareBoard} />
+  if (board.type === 'wall')    return <WallBoardView     board={board} onShareBoard={onShareBoard} />
+  if (board.type === 'project') return <ProjectBoardView  board={board} onShareBoard={onShareBoard} />
 
   return <div style={{ padding:40, color:'var(--c-muted)' }}>알 수 없는 보드 타입입니다.</div>
 }

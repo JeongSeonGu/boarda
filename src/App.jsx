@@ -29,6 +29,7 @@ import './styles/auth.css'
 import './styles/wall.css'
 import './styles/boardSettings.css'
 import './styles/folder.css'
+import './styles/project.css'
 import './index.css'
 
 function RequireAuth({ children }) {
@@ -82,6 +83,7 @@ function AppShell() {
             <Route path="/columns" element={<BoardListPage type="columns" onNewBoard={handleNewBoard} onShareBoard={handleShareBoard} />} />
             <Route path="/links"   element={<BoardListPage type="links"   onNewBoard={handleNewBoard} onShareBoard={handleShareBoard} />} />
             <Route path="/wall"    element={<BoardListPage type="wall"    onNewBoard={handleNewBoard} onShareBoard={handleShareBoard} />} />
+            <Route path="/project" element={<BoardListPage type="project" onNewBoard={handleNewBoard} onShareBoard={handleShareBoard} />} />
             <Route path="/shared"  element={<SharedListPage />} />
             <Route path="/folder/:folderId" element={<FolderDetailPage />} />
             <Route path="/board/:boardId"   element={<BoardDetailPage onShareBoard={handleShareBoard} />} />

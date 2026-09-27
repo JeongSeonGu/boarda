@@ -25,6 +25,7 @@ async function loadAllBoards() {
     { data: posts },
     { data: links },
     { data: wallPosts },
+    { data: projectTasks },
   ] = await Promise.all([
     supabase.from('boards').select('*').order('created_at', { ascending: false }),
     supabase.from('folders').select('*').order('created_at', { ascending: false }),
@@ -32,6 +33,7 @@ async function loadAllBoards() {
     supabase.from('posts').select('*').order('created_at'),
     supabase.from('links').select('*').order('created_at'),
     supabase.from('wall_posts').select('*').order('z_order').order('created_at'),
+    supabase.from('project_tasks').select('*').order('position').order('created_at'),
   ])
   if (bErr) throw bErr
 
@@ -41,8 +43,9 @@ async function loadAllBoards() {
       ? (columns ?? []).filter((c) => c.board_id === b.id)
           .map((c) => ({ ...c, posts: (posts ?? []).filter((p) => p.column_id === c.id) }))
       : undefined,
-    links:      b.type === 'links' ? (links ?? []).filter((l) => l.board_id === b.id) : undefined,
-    wall_posts: b.type === 'wall'  ? (wallPosts ?? []).filter((w) => w.board_id === b.id) : undefined,
+    links:         b.type === 'links'   ? (links ?? []).filter((l) => l.board_id === b.id) : undefined,
+    wall_posts:    b.type === 'wall'    ? (wallPosts ?? []).filter((w) => w.board_id === b.id) : undefined,
+    project_tasks: b.type === 'project' ? (projectTasks ?? []).filter((t) => t.board_id === b.id) : undefined,
   }))
 
   return { boards: enrichedBoards, folders: folders ?? [] }
@@ -411,6 +414,30 @@ const useBoardStore = create((set, get) => ({
     set((s) => ({ boards: s.boards.map((b) => b.id !== boardId ? b : {
       ...b, wall_posts: b.wall_posts.filter((w) => w.id !== postId) }) }))
     get().showToast('메모가 삭제되었습니다', 'info')
+  },
+
+  /* 프로젝트 업무 CRUD */
+  createTask: async (data) => {
+    const id = genId('t')
+    const board = get().boards.find((b) => b.id === data.board_id)
+    const pos = (board?.project_tasks ?? []).length
+    const { error } = await supabase.from('project_tasks').insert({ id, ...data, position: pos })
+    if (error) { get().showToast('업무 추가 실패', 'error'); return null }
+    const { boards, folders } = await loadAllBoards(); set({ boards, folders })
+    get().showToast('업무가 추가되었습니다! ✅', 'success'); return id
+  },
+  updateTask: async (taskId, patch) => {
+    const { error } = await supabase.from('project_tasks')
+      .update({ ...patch, updated_at: new Date().toISOString() }).eq('id', taskId)
+    if (error) { get().showToast('수정 실패', 'error'); return }
+    const { boards, folders } = await loadAllBoards(); set({ boards, folders })
+    get().showToast('수정되었습니다', 'success')
+  },
+  deleteTask: async (taskId, boardId) => {
+    await supabase.from('project_tasks').delete().eq('id', taskId)
+    set((s) => ({ boards: s.boards.map((b) => b.id !== boardId ? b : {
+      ...b, project_tasks: (b.project_tasks ?? []).filter((t) => t.id !== taskId) }) }))
+    get().showToast('업무가 삭제되었습니다', 'info')
   },
 }))
 
