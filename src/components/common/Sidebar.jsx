@@ -2,9 +2,10 @@
  * components/common/Sidebar.jsx
  * 수정: 공유됨 메뉴 실제 라우트로 연결, 뱃지에 공유 보드 수 표시
  */
-import React from 'react'
+import React, { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import useBoardStore from '../../store/useBoardStore'
+import FolderModal from '../modals/FolderModal'
 import '../../styles/sidebar.css'
 
 const NAV_ITEMS = [
@@ -12,16 +13,18 @@ const NAV_ITEMS = [
   { to: '/columns', icon: '📋', label: '컬럼 보드',   boardType: 'columns' },
   { to: '/links',   icon: '🔗', label: '링크 보드',   boardType: 'links' },
   { to: '/wall',    icon: '📝', label: '담벼락',       boardType: 'wall' },
-  { to: '/project', icon: '📁', label: '프로젝트',     boardType: 'project' },
+  { to: '/project', icon: '🗂️', label: '프로젝트',     boardType: 'project' },
   { divider: true },
   { to: '/shared',  icon: '🤝', label: '공유 중',     sharedCount: true },
   { icon: '⭐', label: '즐겨찾기', soon: true },
+  { icon: '📁', label: '폴더 만들기', folderCreate: true },
   { divider: true },
   { icon: '⚙️', label: '설정', soon: true },
 ]
 
 export default function Sidebar() {
   const collapsed     = useBoardStore((s) => s.sidebarCollapsed)
+  const [folderOpen, setFolderOpen] = useState(false)
   const showToast     = useBoardStore((s) => s.showToast)
   const boards        = useBoardStore((s) => s.boards)
 
@@ -38,6 +41,17 @@ export default function Sidebar() {
       <nav className="sidebar-nav" aria-label="메인 메뉴">
         {NAV_ITEMS.map((item, i) => {
           if (item.divider) return <div key={i} className="divider" style={{ margin: '8px 12px' }} />
+
+          if (item.folderCreate) {
+            return (
+              <button key={item.label} className="nav-item"
+                onClick={() => setFolderOpen(true)}
+                title={collapsed ? item.label : undefined}>
+                <span className="nav-icon">{item.icon}</span>
+                {!collapsed && <span className="nav-label">{item.label}</span>}
+              </button>
+            )
+          }
 
           if (item.soon) {
             return (
@@ -68,6 +82,8 @@ export default function Sidebar() {
           )
         })}
       </nav>
+
+      <FolderModal isOpen={folderOpen} onClose={() => setFolderOpen(false)} />
 
       <div className="sidebar-bottom">
         {!collapsed && (

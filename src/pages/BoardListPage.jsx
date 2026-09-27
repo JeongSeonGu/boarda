@@ -12,6 +12,7 @@ const META = {
   columns: { emoji:'📋', title:'컬럼 보드', desc:'섹션별로 게시물을 정리하는 칸반 스타일 보드입니다' },
   links:   { emoji:'🔗', title:'링크 보드', desc:'사이트와 링크를 태그와 함께 체계적으로 관리합니다' },
   wall:    { emoji:'📝', title:'담벼락',     desc:'포스트잇처럼 자유롭게 메모를 붙이는 보드입니다' },
+  project: { emoji:'🗂️', title:'프로젝트',   desc:'업무 목록으로 프로젝트를 체계적으로 관리합니다' },
 }
 
 export default function BoardListPage({ type, onNewBoard, onShareBoard }) {
