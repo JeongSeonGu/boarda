@@ -668,3 +668,13 @@
   transition: background 0.1s;
 }
 .status-popup-item:hover { background: var(--c-hover); }
+
+/* ── SmartEditor 인라인 콘텐츠 스타일 ── */
+[contenteditable] h3 { font-size: 15px; font-weight: 700; margin: 8px 0 4px; }
+[contenteditable] ul { padding-left: 20px; margin: 4px 0; list-style: disc; }
+[contenteditable] ol { padding-left: 20px; margin: 4px 0; list-style: decimal; }
+[contenteditable] a  { color: var(--c-primary); text-decoration: underline; }
+[contenteditable] img { max-width: 100%; border-radius: 6px; margin: 4px 0; display: block; }
+[contenteditable] strong { font-weight: 700; }
+[contenteditable] em     { font-style: italic; }
+[contenteditable] s      { text-decoration: line-through; }

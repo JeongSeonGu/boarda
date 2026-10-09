@@ -4,6 +4,7 @@
  */
 import React, { useState, useEffect } from 'react'
 import Modal from '../common/Modal'
+import SmartEditor from '../common/SmartEditor'
 import Button from '../common/Button'
 import FileAttachment from '../common/FileAttachment'
 import LinkifiedText from '../common/LinkifiedText'
@@ -106,7 +107,7 @@ export default function PostDetailModal({ isOpen, onClose, boardId, colId, post 
           {post.content && (
             <div style={{ fontSize:14, lineHeight:1.8, color:'var(--c-text-secondary)',
               marginBottom:16, whiteSpace:'pre-wrap' }}>
-              <LinkifiedText text={post.content} />
+              <div dangerouslySetInnerHTML={{ __html: post.content }} style={{ fontSize:14, lineHeight:1.7, color:"var(--c-text)" }} />
             </div>
           )}
           {(post.tags ?? []).length > 0 && (

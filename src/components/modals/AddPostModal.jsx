@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react'
 import Modal from '../common/Modal'
 import Button from '../common/Button'
 import FileAttachment from '../common/FileAttachment'
+import SmartEditor from '../common/SmartEditor'
 import useBoardStore from '../../store/useBoardStore'
 import { parseTags } from '../../utils/helpers'
 
@@ -75,9 +76,8 @@ export default function AddPostModal({ isOpen, onClose, boardId, colId }) {
 
       <div className="form-group">
         <label className="form-label">내용</label>
-        <textarea className="form-textarea" value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="내용을 입력하세요..." style={{ minHeight:100 }} />
+        <SmartEditor value={content} onChange={setContent}
+          placeholder="내용을 입력하세요..." minHeight={100} />
       </div>
 
       <div className="form-group">

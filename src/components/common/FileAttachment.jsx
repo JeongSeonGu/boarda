@@ -29,6 +29,31 @@ function genId() {
   return `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
 }
 
+/* 이미지 리사이즈 + WebP 변환 (Canvas) */
+async function convertToWebp(file) {
+  const MAX_W = 1024, MAX_H = 768
+  return new Promise((resolve) => {
+    const img = new Image()
+    const objUrl = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(objUrl)
+      let { naturalWidth: w, naturalHeight: h } = img
+      if (w > MAX_W || h > MAX_H) {
+        const ratio = Math.min(MAX_W / w, MAX_H / h)
+        w = Math.round(w * ratio); h = Math.round(h * ratio)
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = w; canvas.height = h
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+      canvas.toBlob((blob) => {
+        const webpFile = new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), { type: 'image/webp' })
+        resolve(webpFile)
+      }, 'image/webp', 0.85)
+    }
+    img.src = objUrl
+  })
+}
+
 /* 진행률 포함 업로드 (XMLHttpRequest) */
 async function uploadWithProgress(file, onProgress) {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -100,9 +125,15 @@ export default function FileAttachment({ attachments = [], onChange, isOwner = t
 
     const results = []
     for (let i = 0; i < arr.length; i++) {
-      const f    = arr[i]
+      let   f    = arr[i]
       const item = newItems[i]
       try {
+        /* 이미지면 WebP 변환 + 리사이즈 */
+        if (f.type.startsWith('image/')) {
+          updateItem(item.id, { progress: 1 })
+          f = await convertToWebp(f)
+          updateItem(item.id, { name: f.name })
+        }
         const result = await uploadWithProgress(f, (pct) => updateItem(item.id, { progress: pct }))
         updateItem(item.id, { progress: 100, done: true })
         results.push(result)

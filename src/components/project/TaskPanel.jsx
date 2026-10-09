@@ -4,6 +4,7 @@
  */
 import React, { useState, useRef, useEffect } from 'react'
 import useBoardStore from '../../store/useBoardStore'
+import SmartEditor from '../common/SmartEditor'
 
 const PRIORITY_OPTIONS = ['', '높음', '보통', '낮음']
 
@@ -213,10 +214,11 @@ export default function TaskPanel({ board, task, statuses, badges, onClose }) {
           {/* 내용 */}
           <div className="task-panel-content-area">
             <div className="task-panel-section-title" style={{ marginTop:16 }}>내용</div>
-            <textarea className="task-panel-textarea"
-              placeholder="여기에 내용을 작성해 주세요"
+            <SmartEditor
               value={content}
-              onChange={e => setContent(e.target.value)}
+              onChange={setContent}
+              placeholder="여기에 내용을 작성해 주세요"
+              minHeight={160}
             />
           </div>
         </div>
