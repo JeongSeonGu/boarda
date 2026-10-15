@@ -180,3 +180,20 @@
   box-shadow: var(--shadow-lg);
   text-align: center;
 }
+
+/* ── 통계 필 ── */
+.stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 14px;
+  background: var(--c-bg-soft, #f5f5f5);
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--c-muted);
+}
+.stat-pill strong {
+  color: var(--c-text);
+  font-weight: 700;
+}

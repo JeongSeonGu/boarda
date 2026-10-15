@@ -9,7 +9,7 @@ import SmartEditor from '../common/SmartEditor'
 import useBoardStore from '../../store/useBoardStore'
 import { parseTags } from '../../utils/helpers'
 
-export default function AddPostModal({ isOpen, onClose, boardId, colId }) {
+export default function AddPostModal({ isOpen, onClose, boardId, colId, onSuccess }) {
   const addPost = useBoardStore((s) => s.addPost)
   const boards  = useBoardStore((s) => s.boards)
   const author  = useBoardStore((s) => s.author)
@@ -40,7 +40,7 @@ export default function AddPostModal({ isOpen, onClose, boardId, colId }) {
       title: title.trim(), content,
       tags: parseTags(tags), attachments,
     })
-    reset(); onClose()
+    reset(); onClose(); onSuccess?.()
   }
 
   return (

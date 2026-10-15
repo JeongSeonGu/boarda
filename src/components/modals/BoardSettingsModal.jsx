@@ -49,6 +49,7 @@ export default function BoardSettingsModal({ isOpen, onClose, board }) {
   const [bgImageKey,    setBgImageKey]    = useState(null)   // Storage 경로
   const [bgOpacity,     setBgOpacity]     = useState(1.0)
   const [reactionType,  setReactionType]  = useState('none')
+  const [guestNotify,   setGuestNotify]   = useState(true)
   const [uploading,     setUploading]     = useState(false)
   const fileInputRef = useRef(null)
 
@@ -61,6 +62,7 @@ export default function BoardSettingsModal({ isOpen, onClose, board }) {
       setBgImageKey(board.bg_image_key ?? null)
       setBgOpacity(board.bg_opacity ?? 1.0)
       setReactionType(board.reaction_type ?? 'none')
+      setGuestNotify(board.guest_notify ?? true)
     }
   }, [board, isOpen])
 
@@ -116,6 +118,7 @@ export default function BoardSettingsModal({ isOpen, onClose, board }) {
       bg_image_key:  bgImageKey,
       bg_opacity:    bgOpacity,
       reaction_type: reactionType,
+      guest_notify:  guestNotify,
     })
     onClose()
   }
@@ -272,6 +275,44 @@ export default function BoardSettingsModal({ isOpen, onClose, board }) {
           {reactionType === 'star' && '게시물마다 ⭐ 별점(1~5점)을 남길 수 있습니다.'}
         </p>
       </div>
+
+      {/* ── 게시물 통계 ── */}
+      <div className="settings-section">
+        <div className="settings-section-title">게시물 통계</div>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {board.type === 'columns' && (
+            <>
+              <div className="stat-pill">📂 컬럼 <strong>{board.columns?.length ?? 0}</strong>개</div>
+              <div className="stat-pill">📝 게시물 <strong>{(board.columns ?? []).reduce((a, c) => a + (c.posts?.length ?? 0), 0)}</strong>개</div>
+            </>
+          )}
+          {board.type === 'wall' && (
+            <div className="stat-pill">📝 게시물 <strong>{board.wall_posts?.length ?? 0}</strong>개</div>
+          )}
+          {board.type === 'links' && (
+            <div className="stat-pill">🔗 링크 <strong>{board.links?.length ?? 0}</strong>개</div>
+          )}
+          <div className="stat-pill">🌐 공유 <strong>{board.is_public ? 'ON' : 'OFF'}</strong></div>
+        </div>
+      </div>
+
+      {/* ── 공유 알림 설정 ── */}
+      {board.is_public && (
+        <div className="settings-section" style={{ paddingBottom: 0 }}>
+          <div className="settings-section-title">공유 알림</div>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+            <input type="checkbox" checked={guestNotify}
+              onChange={(e) => setGuestNotify(e.target.checked)}
+              style={{ marginTop: 2, width: 16, height: 16, accentColor: 'var(--c-primary)', cursor: 'pointer', flexShrink: 0 }} />
+            <span style={{ fontSize: 13, lineHeight: 1.5 }}>
+              공유된 보드에 방문자가 게시물을 등록할 때 <strong>완료 안내 메시지</strong>를 표시합니다
+            </span>
+          </label>
+          <p style={{ fontSize: 11, color: 'var(--c-muted)', marginTop: 6, paddingLeft: 26 }}>
+            체크 시 방문자 화면에 "게시물이 등록되었습니다" 토스트 메시지가 나타납니다.
+          </p>
+        </div>
+      )}
     </Modal>
   )
 }

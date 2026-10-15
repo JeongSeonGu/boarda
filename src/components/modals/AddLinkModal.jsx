@@ -16,7 +16,7 @@ const IMPORTANCES = [
   { value:'나중에', label:'🔖 나중에' },
 ]
 
-export default function AddLinkModal({ isOpen, onClose, boardId }) {
+export default function AddLinkModal({ isOpen, onClose, boardId, onSuccess }) {
   const addLink = useBoardStore((s) => s.addLink)
   const author  = useBoardStore((s) => s.author)
 
@@ -46,7 +46,7 @@ export default function AddLinkModal({ isOpen, onClose, boardId }) {
       tags: parseTags(tags),
       attachments,
     })
-    reset(); onClose()
+    reset(); onClose(); onSuccess?.()
   }
 
   return (

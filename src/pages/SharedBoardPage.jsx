@@ -67,6 +67,12 @@ export default function SharedBoardPage() {
   const [unlocked, setUnlocked]   = useState(false)
   const [editName, setEditName]   = useState(null)   // 편집 공유 실명
   const [showNameGate, setShowNameGate] = useState(false)
+  const [localToast, setLocalToast]   = useState(null)
+
+  const showLocalToast = (msg) => {
+    setLocalToast(msg)
+    setTimeout(() => setLocalToast(null), 3000)
+  }
 
   const postModal = useModal()
   const linkModal = useModal()
@@ -313,14 +319,28 @@ export default function SharedBoardPage() {
 
       {/* 편집 공유 모달들 (editName 있을 때만) */}
       {canEditShare && editName && board.type === 'columns' && (
-        <AddPostModal isOpen={postModal.isOpen} onClose={postModal.close} boardId={boardId} />
+        <AddPostModal isOpen={postModal.isOpen} onClose={postModal.close} boardId={boardId}
+          onSuccess={() => board.guest_notify !== false && showLocalToast('✅ 게시물이 등록되었습니다!')} />
       )}
       {canEditShare && editName && board.type === 'links' && (
-        <AddLinkModal isOpen={linkModal.isOpen} onClose={linkModal.close} boardId={boardId} />
+        <AddLinkModal isOpen={linkModal.isOpen} onClose={linkModal.close} boardId={boardId}
+          onSuccess={() => board.guest_notify !== false && showLocalToast('✅ 링크가 등록되었습니다!')} />
       )}
       {canEditShare && editName && board.type === 'wall' && (
         <WallPostModal isOpen={wallModal.isOpen} onClose={wallModal.close}
-          boardId={boardId} post={wallModal.data} />
+          boardId={boardId} post={wallModal.data}
+          onSuccess={() => board.guest_notify !== false && showLocalToast('✅ 게시물이 등록되었습니다!')} />
+      )}
+
+      {/* 게시 완료 토스트 */}
+      {localToast && (
+        <div style={{
+          position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+          background: 'var(--c-primary)', color: '#fff',
+          padding: '10px 28px', borderRadius: 999, fontSize: 14, fontWeight: 600,
+          boxShadow: '0 4px 20px rgba(0,0,0,.25)', zIndex: 9999,
+          pointerEvents: 'none', whiteSpace: 'nowrap',
+        }}>{localToast}</div>
       )}
     </div>
   )

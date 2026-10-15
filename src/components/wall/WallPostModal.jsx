@@ -20,7 +20,7 @@ const COLORS = [
   { hex: '#CFD8DC', label: '회색' },
 ]
 
-export default function WallPostModal({ isOpen, onClose, boardId, post = null }) {
+export default function WallPostModal({ isOpen, onClose, boardId, post = null, onSuccess }) {
   const addWallPost    = useBoardStore((s) => s.addWallPost)
   const updateWallPost = useBoardStore((s) => s.updateWallPost)
   const author         = useBoardStore((s) => s.author)
@@ -53,7 +53,7 @@ export default function WallPostModal({ isOpen, onClose, boardId, post = null })
     } else {
       await addWallPost(boardId, { content: trimmed, color, attachments })
     }
-    onClose()
+    onClose(); onSuccess?.()
   }
 
   return (
