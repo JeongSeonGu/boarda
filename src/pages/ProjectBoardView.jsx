@@ -7,6 +7,8 @@ import useBoardStore from '../store/useBoardStore'
 import BoardHeader from '../components/board/BoardHeader'
 import TaskPanel from '../components/project/TaskPanel'
 import FileAttachment from '../components/common/FileAttachment'
+import BoardSettingsModal from '../components/modals/BoardSettingsModal'
+import { useModal } from '../hooks/useModal'
 import '../styles/project.css'
 
 const DEFAULT_STATUSES = [
@@ -510,6 +512,7 @@ function SettingsTab({ board, statuses, setStatuses, badges, setBadges }) {
 // 메인 뷰
 // ══════════════════════════════════════════════════════
 export default function ProjectBoardView({ board, onShareBoard }) {
+  const settingsModal = useModal()
   const [activeTab, setActiveTab] = useState('tasks')
   const [panelTask, setPanelTask] = useState(null)   // null=닫힘, {}=새 업무, task=수정
   const [panelOpen, setPanelOpen]  = useState(false)
@@ -545,7 +548,8 @@ export default function ProjectBoardView({ board, onShareBoard }) {
 
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
-      <BoardHeader board={board} onShareBoard={onShareBoard} />
+      <BoardHeader board={board} onShare={onShareBoard} onSettings={settingsModal.open} />
+      <BoardSettingsModal isOpen={settingsModal.isOpen} onClose={settingsModal.close} board={board} />
 
       {/* 탭 */}
       <div className="proj-tabs">
